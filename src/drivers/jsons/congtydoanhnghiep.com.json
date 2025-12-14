@@ -1,0 +1,19 @@
+{
+  "name": "Cong ty doanh nghiep",
+  "baseUrl": "https://congtydoanhnghiep.com",
+  "dateFormatInUse": "dd-mm-yyyy",
+  "supportedExportFormat": ["csv", "docx"],
+  "selectors": {
+    "companyLinks": "div.table-striped article h2 a",
+    "companyDetail": {
+      "name": "div.table-striped div.table-responsive table:nth-child(2) tbody tr:nth-child(1) td",
+      "founder": "div.table-striped div.table-responsive table:nth-child(2) > tbody > tr:nth-child(2) > td",
+      "taxCode": "div.table-striped div.table-responsive table:nth-child(2) > tbody > tr:nth-child(3) > td",
+      "phoneNumber": "div.table-striped div.table-responsive table:nth-child(4) tbody tr:nth-child(2) td",
+      "address": "div.table-striped div.table-responsive table:nth-child(4) > tbody > tr:nth-child(1) > td",
+      "startDate": "div.table-striped div.table-responsive table:nth-child(6) > tbody > tr:nth-child(3) > td"
+    }
+  },
+  "blackList": [],
+  "whiteList": []
+}

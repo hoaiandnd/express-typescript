@@ -1,12 +1,24 @@
+import { supportedDomainsLoader } from '@/loaders'
 import express from 'express'
-import dotenv from 'dotenv'
-import appRoute from '@/routes'
-dotenv.config()
+import * as cheerio from 'cheerio'
+import pLimit from 'p-limit'
+import { crawler } from '@/utils/config'
+import { Fetcher } from '@/fetcher'
+import CongTyDoanhNghiepDriver from '@/drivers/congtydoanhnghiep.com'
 
 const app = express()
-const port = process.env.PORT || 3000
+const port = 3000
+// built-in middleware
+app.use(express.json())
 
-app.use('/', appRoute)
+app.post('/', async (req, res) => {
+  const urlExtractor = await supportedDomainsLoader(req)
+  if (!!urlExtractor) {
+    const fetcher = new Fetcher(new CongTyDoanhNghiepDriver(urlExtractor))
+    const companyDetails = await fetcher.fetchCompanyDetails()
+    res.json(companyDetails)
+  } else res.status(400).json('Ten mien chua co driver nao dang ky. Hay dang ky trong configs.json')
+})
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`)
