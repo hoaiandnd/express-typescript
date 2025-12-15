@@ -1,4 +1,5 @@
 import { CompanyBaseDetail, DriverBase, NextPage } from '@/drivers/driver'
+import { ClientDateTimeString } from '@/types/datetime'
 import { UrlExtractor } from '@/utils/url'
 import * as cheerio from 'cheerio'
 
@@ -29,6 +30,11 @@ export default class CongTyDoanhNghiepDriver extends DriverBase {
     const anchors = $(companyLinkSelectors)
     const links = anchors.map((_, a) => this.combineLink($(a).attr('href')))
     return links.toArray()
+  }
+  async checkStartDate(companyDetail: CompanyBaseDetail, fromDate?: ClientDateTimeString) {
+    if (!fromDate) return true
+    const { startDate } = companyDetail
+    return true
   }
   async getCompanyDetail(html: string) {
     const $ = cheerio.load(html)

@@ -2,12 +2,14 @@ import { UrlExtractor } from '@/utils/url'
 import path from 'path'
 import fs from 'fs/promises'
 import { CheerioAPI } from 'cheerio'
+import { ClientDateTimeString } from '@/types/datetime'
 export type NextPage = { nextPageIndex: number; nextPageUrl: string }
 export interface IDriver {
   combineLink(): string
   getCompanyLinks(html: string): string[] | Promise<string[]>
   getCompanyDetail(html: string): CompanyBaseDetail | Promise<CompanyBaseDetail>
   nextPage(): NextPage
+  checkStartDate(detail: CompanyBaseDetail, fromDate?: ClientDateTimeString): boolean | Promise<boolean>
 }
 export type CompanyBaseDetail = {
   name?: string
@@ -62,4 +64,5 @@ export abstract class DriverBase implements IDriver {
   abstract getCompanyLinks(html: string): string[] | Promise<string[]>
   abstract getCompanyDetail(html: string): CompanyBaseDetail | Promise<CompanyBaseDetail>
   abstract nextPage(): NextPage
+  abstract checkStartDate(detail: CompanyBaseDetail, fromDate?: ClientDateTimeString): boolean | Promise<boolean>
 }

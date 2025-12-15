@@ -5,6 +5,7 @@ import pLimit from 'p-limit'
 import { crawler } from '@/utils/config'
 import { Fetcher } from '@/fetcher'
 import CongTyDoanhNghiepDriver from '@/drivers/congtydoanhnghiep.com'
+import { CompanyFilters } from '@/types/request'
 
 const app = express()
 const port = 3000
@@ -14,8 +15,9 @@ app.use(express.json())
 app.post('/', async (req, res) => {
   const urlExtractor = await supportedDomainsLoader(req)
   if (!!urlExtractor) {
+    const filters = req.body as CompanyFilters
     const fetcher = new Fetcher(new CongTyDoanhNghiepDriver(urlExtractor))
-    const companyDetails = await fetcher.fetchCompanyDetails()
+    const companyDetails = await fetcher.multiplePageFetch(filters)
     res.json(companyDetails)
   } else res.status(400).json('Ten mien chua co driver nao dang ky. Hay dang ky trong configs.json')
 })

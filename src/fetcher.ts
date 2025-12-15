@@ -1,4 +1,5 @@
-import { DriverBase, IDriver } from '@/drivers/driver'
+import { CompanyBaseDetail, DriverBase, IDriver } from '@/drivers/driver'
+import { CompanyFilters } from '@/types/request'
 import { crawler } from '@/utils/config'
 import pLimit from 'p-limit'
 
@@ -25,17 +26,48 @@ export class Fetcher {
       throw new Error('NO_RESPONSE_HTML')
     }
   }
-  protected async fetchCompanyDetail(companyLink: string) {
+  protected async fetchCompanyDetail(companyLink: string, filter?: CompanyFilters) {
     const html = await this.fetchHtml(companyLink)
     const result = await this.driver.getCompanyDetail(html)
+    if (filter?.from && !this.driver.checkStartDate(result, filter?.from)) {
+      return null
+    }
     return result
   }
-  async fetchCompanyDetails() {
+  async fetchCompanyDetails(filters?: CompanyFilters) {
     const links = await this.fetchCompanyLinks()
+    if (links.length <= 0)
+      return {
+        nextPage: this.driver.nextPage(),
+        pageResult: [] as CompanyBaseDetail[]
+      }
+
+    //  kiểm tra theo ngày
+    const finalCompanyLink = links[links.length - 1]
+    const finalCompanyDetail = await this.fetchCompanyDetail(finalCompanyLink, filters)
+    // thong tin cuoi cung khong thoa ma dieu kien ngay tim kiem
+    if (!finalCompanyDetail)
+      return {
+        nextPage: this.driver.nextPage(),
+        pageResult: [] as CompanyBaseDetail[]
+      }
+
     const limit = pLimit(10)
     const fetchPromises = links.map(link => limit(() => this.fetchCompanyDetail(link)))
     const fetchPromisesResult = await Promise.all(fetchPromises)
-    return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult }
+    return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult.filter(v => !!v) }
   }
-  async multiplePageFetch() {}
+  async multiplePageFetch(filters?: CompanyFilters) {
+    let MAX_PAGE_COUNT = 10
+    const results = [] as CompanyBaseDetail[]
+    while (--MAX_PAGE_COUNT) {
+      console.log('Dang cao du lieu')
+      let pageResult = await this.fetchCompanyDetails(filters)
+      results.push(...pageResult.pageResult.filter(p => !!p.phoneNumber))
+
+      this.driver.nextPage()
+      console.log('Ket thuc cao du lieu')
+    }
+    return results
+  }
 }
