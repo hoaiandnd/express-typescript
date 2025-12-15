@@ -1,4 +1,4 @@
-import { CompanyBaseDetail, DriverBase, IDriver } from '@/drivers/driver'
+import { CompanyBaseDetail, DriverBase } from '@/drivers/driver'
 import { CompanyFilters } from '@/types/request'
 import { crawler } from '@/utils/config'
 import pLimit from 'p-limit'
@@ -23,13 +23,14 @@ export class Fetcher {
       }
       return resHtml
     } catch {
-      throw new Error('NO_RESPONSE_HTML')
+      // throw new Error('NO_RESPONSE_HTML')
+      console.log('Loi fetch')
     }
   }
   protected async fetchCompanyDetail(companyLink: string, filter?: CompanyFilters) {
     const html = await this.fetchHtml(companyLink)
     const result = await this.driver.getCompanyDetail(html)
-    if (filter?.from && !this.driver.checkStartDate(result, filter?.from)) {
+    if (!this.driver.validateCompanyDetail(result, filter)) {
       return null
     }
     return result
@@ -58,14 +59,18 @@ export class Fetcher {
     return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult.filter(v => !!v) }
   }
   async multiplePageFetch(filters?: CompanyFilters) {
-    let MAX_PAGE_COUNT = 10
-    const results = [] as CompanyBaseDetail[]
+    let MAX_PAGE_COUNT = 5
+    const results = [] as { phoneNumber: string; name?: string }[]
     while (--MAX_PAGE_COUNT) {
       console.log('Dang cao du lieu')
-      let pageResult = await this.fetchCompanyDetails(filters)
-      results.push(...pageResult.pageResult.filter(p => !!p.phoneNumber))
+      const pageResult = await this.fetchCompanyDetails(filters)
+      const data = pageResult.pageResult
+        .map(pr => ({ phoneNumber: pr.phoneNumber, name: pr.name }))
+        .filter(s => !!s.phoneNumber)
+      results.push(...data)
 
-      this.driver.nextPage()
+      // const next = this.driver.nextPage()
+      console.log('Tiep tuc voi trang ' + pageResult.nextPage.nextPageIndex)
       console.log('Ket thuc cao du lieu')
     }
     return results

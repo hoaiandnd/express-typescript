@@ -1,15 +1,17 @@
 import { UrlExtractor } from '@/utils/url'
 import path from 'path'
 import fs from 'fs/promises'
-import { CheerioAPI } from 'cheerio'
+import * as cheerio from 'cheerio'
 import { ClientDateTimeString } from '@/types/datetime'
+import { CompanyFilters } from '@/types/request'
 export type NextPage = { nextPageIndex: number; nextPageUrl: string }
 export interface IDriver {
   combineLink(): string
-  getCompanyLinks(html: string): string[] | Promise<string[]>
-  getCompanyDetail(html: string): CompanyBaseDetail | Promise<CompanyBaseDetail>
+  getCompanyLinks(_html: string): string[] | Promise<string[]>
+  getCompanyDetail(_html: string): CompanyBaseDetail | Promise<CompanyBaseDetail>
   nextPage(): NextPage
-  checkStartDate(detail: CompanyBaseDetail, fromDate?: ClientDateTimeString): boolean | Promise<boolean>
+  checkStartDate(_detail: CompanyBaseDetail, _fromDate?: ClientDateTimeString): boolean | Promise<boolean>
+  validateCompanyDetail(_detail: CompanyBaseDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
 }
 export type CompanyBaseDetail = {
   name?: string
@@ -26,6 +28,10 @@ export abstract class DriverBase implements IDriver {
   get urlExtractor() {
     return this._urlExtractor
   }
+  protected loadHtml(html: string, defaultValue: string = '', logHtml: boolean = true) {
+    if (logHtml) console.log(typeof html === 'string')
+    return cheerio.load(typeof html === 'string' ? html : defaultValue)
+  }
   protected async loadDriverJson(name?: string) {
     const fileName = name ?? `${this._urlExtractor.domain}.json`
     const filePath = path.join(__dirname, 'jsons', fileName)
@@ -37,12 +43,12 @@ export abstract class DriverBase implements IDriver {
     const result = path.split(seperator).reduce((acc, key) => acc?.[key], obj)
     return result ?? defaultValue
   }
-  protected async crawlProperty($: CheerioAPI, selectorKey: string) {
+  protected async crawlProperty($: cheerio.CheerioAPI, selectorKey: string) {
     const selector = await this.getProperty(selectorKey)
     if (selector) return $(selector)
     else return undefined
   }
-  protected async crawl($: CheerioAPI) {
+  protected async crawl($: cheerio.CheerioAPI) {
     const $phone = await this.crawlProperty($, 'selectors.companyDetail.phoneNumber')
     const $name = await this.crawlProperty($, 'selectors.companyDetail.name')
     const $founder = await this.crawlProperty($, 'selectors.companyDetail.founder')
@@ -50,9 +56,9 @@ export abstract class DriverBase implements IDriver {
     const $address = await this.crawlProperty($, 'selectors.companyDetail.address')
     const $startDate = await this.crawlProperty($, 'selectors.companyDetail.startDate')
     return {
-      phoneNumber: $phone?.first().text() || '',
       name: $name?.first().text(),
       founder: $founder?.first().text(),
+      phoneNumber: $phone?.first().text() || '',
       address: $address?.first().text(),
       taxCode: $taxCode?.first().text(),
       startDate: $startDate?.first().text()
@@ -61,8 +67,9 @@ export abstract class DriverBase implements IDriver {
   combineLink(href?: string) {
     return `${this._urlExtractor.baseUrl}${href}`
   }
-  abstract getCompanyLinks(html: string): string[] | Promise<string[]>
-  abstract getCompanyDetail(html: string): CompanyBaseDetail | Promise<CompanyBaseDetail>
+  abstract getCompanyLinks(_html: string): string[] | Promise<string[]>
+  abstract getCompanyDetail(_html: string): CompanyBaseDetail | Promise<CompanyBaseDetail>
   abstract nextPage(): NextPage
-  abstract checkStartDate(detail: CompanyBaseDetail, fromDate?: ClientDateTimeString): boolean | Promise<boolean>
+  abstract checkStartDate(_detail: CompanyBaseDetail, _fromDate?: ClientDateTimeString): boolean | Promise<boolean>
+  abstract validateCompanyDetail(_detail: CompanyBaseDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
 }

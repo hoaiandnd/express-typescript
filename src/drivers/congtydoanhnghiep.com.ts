@@ -1,5 +1,6 @@
 import { CompanyBaseDetail, DriverBase, NextPage } from '@/drivers/driver'
 import { ClientDateTimeString } from '@/types/datetime'
+import { CompanyFilters } from '@/types/request'
 import { UrlExtractor } from '@/utils/url'
 import * as cheerio from 'cheerio'
 
@@ -10,6 +11,15 @@ export class CongTyDoanhNghiepSelector {
 }
 
 export default class CongTyDoanhNghiepDriver extends DriverBase {
+  validateCompanyDetail(detail: CompanyBaseDetail, filter?: CompanyFilters): boolean | Promise<boolean> {
+    if (detail.phoneNumber.startsWith('02')) return false
+    else if (
+      detail.name?.toLowerCase()?.includes('chi nhánh') ||
+      detail.name?.toLowerCase()?.includes('văn phòng đại diện')
+    )
+      return false
+    return true
+  }
   nextPage(): NextPage {
     const { pathName } = this._urlExtractor
     const [, page] = pathName.match(/trang-(\d+)/) || []
@@ -25,7 +35,7 @@ export default class CongTyDoanhNghiepDriver extends DriverBase {
     super(_urlExtractor)
   }
   async getCompanyLinks(html: string) {
-    const $ = cheerio.load(html)
+    const $ = this.loadHtml(html)
     const companyLinkSelectors = await this.getProperty('selectors.companyLinks')
     const anchors = $(companyLinkSelectors)
     const links = anchors.map((_, a) => this.combineLink($(a).attr('href')))
@@ -37,7 +47,7 @@ export default class CongTyDoanhNghiepDriver extends DriverBase {
     return true
   }
   async getCompanyDetail(html: string) {
-    const $ = cheerio.load(html)
+    const $ = this.loadHtml(html)
     const crawlResult = await this.crawl($)
     return crawlResult
   }
