@@ -1,0 +1,30 @@
+{
+  "name": "Tra ten cong ty",
+  "baseUrl": "https://www.tratencongty.com",
+  "dateFormatInUse": "dd-mm-yyyy",
+  "supportedExportFormat": ["csv", "docx"],
+  "selectors": {
+    "companyLinks": "body div div.col-sm-9 div:nth-child(3) div.search-results a",
+    "companyDetail": {
+      "name": "body > div > div.col-sm-9 > div.jumbotron > h4 > a > span",
+      "founder": "",
+      "taxCode": "",
+      "phoneNumber": "body > div > div.col-sm-9 > div.jumbotron > img",
+      "address": "",
+      "startDate": ""
+    }
+  },
+  "blackList": {
+    "name": {
+      "list": ["Chi nhánh", "văn phòng đại diện", "Ủy ban", "Hợp tác xã", "Doanh nghiệp tư nhân"],
+      "validateType": "includes",
+      "ignoreCase": true
+    },
+    "phoneNumber": {
+      "list": ["02"],
+      "validateType": "startWith",
+      "ignoreCase": true
+    }
+  },
+  "whiteList": []
+}

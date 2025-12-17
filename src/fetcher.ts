@@ -9,6 +9,7 @@ export class Fetcher {
     this.driver = driver
   }
   async fetchCompanyLinks() {
+    console.log('this.driver.urlExtractor.url: ', this.driver.urlExtractor.url)
     const responseHtml = await this.fetchHtml(this.driver.urlExtractor.url)
     const companyLinks = await this.driver.getCompanyLinks(responseHtml)
     return companyLinks
@@ -22,8 +23,8 @@ export class Fetcher {
         return 'No number html'
       }
       return resHtml
-    } catch {
-      // throw new Error('NO_RESPONSE_HTML')
+    } catch (err) {
+      console.log(err)
       console.log('Loi fetch')
     }
   }
@@ -59,7 +60,7 @@ export class Fetcher {
     return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult.filter(v => !!v) }
   }
   async multiplePageFetch(filters?: CompanyFilters) {
-    let MAX_PAGE_COUNT = 5
+    let MAX_PAGE_COUNT = 20
     const results = [] as { phoneNumber: string; name?: string }[]
     while (--MAX_PAGE_COUNT) {
       console.log('Dang cao du lieu')

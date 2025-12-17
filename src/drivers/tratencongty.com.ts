@@ -3,14 +3,9 @@ import { ClientDateTimeString } from '@/types/datetime'
 import { CompanyFilters } from '@/types/request'
 import { UrlExtractor } from '@/utils/url'
 import * as cheerio from 'cheerio'
+import { createWorker } from 'tesseract.js'
 
-export class CongTyDoanhNghiepSelector {
-  static Anchors: string = 'div.table-striped article h2 a'
-  static PhoneNumber: string = 'div.table-striped div.table-responsive table:nth-child(4) tbody tr:nth-child(2) td'
-  static Name: string = 'div.table-striped div.table-responsive table:nth-child(2) tbody tr:nth-child(1) td'
-}
-
-export default class CongTyDoanhNghiepDriver extends DriverBase {
+export default class TraTenCongTyDriver extends DriverBase {
   validateCompanyDetail(detail: CompanyBaseDetail, filter?: CompanyFilters): boolean | Promise<boolean> {
     // if (detail.phoneNumber.startsWith('02')) return false
     // else if (
@@ -21,15 +16,21 @@ export default class CongTyDoanhNghiepDriver extends DriverBase {
     return true
   }
   nextPage(): NextPage {
-    const { pathName } = this._urlExtractor
-    const [, page] = pathName.match(/trang-(\d+)/) || []
-    const nextPage = page ? +page + 1 : 2
-    if (page) {
-      this._urlExtractor.pathName = this._urlExtractor.pathName.replace(/trang-\d+/, `trang-${nextPage}`)
-    } else {
-      this._urlExtractor.pathName = pathName.replace(/\/([^\/]+)\.html$/, '/$1/trang-2')
+    const pageParam = this._urlExtractor.urlObj.searchParams.get('page') ?? '1'
+    const currentPage = Math.max(parseInt(pageParam) || 1, 1)
+
+    const nextPage = currentPage + 1
+
+    // 👉 thay đổi TRỰC TIẾP trên url hiện tại
+    this._urlExtractor.urlObj.searchParams.set('page', nextPage + '')
+
+    // nếu muốn URL trang 1 KHÔNG có ?page=1
+    if (nextPage === 1) {
+      this._urlExtractor.urlObj.searchParams.delete('page')
     }
-    return { nextPageUrl: this._urlExtractor.url, nextPageIndex: nextPage }
+    const result = { nextPageUrl: this._urlExtractor.url, nextPageIndex: nextPage }
+    console.log(result.nextPageUrl)
+    return result
   }
   constructor(protected _urlExtractor: UrlExtractor) {
     super(_urlExtractor)
@@ -43,7 +44,7 @@ export default class CongTyDoanhNghiepDriver extends DriverBase {
   }
   async checkStartDate(companyDetail: CompanyBaseDetail, fromDate?: ClientDateTimeString) {
     if (!fromDate) return true
-    const { startDate } = companyDetail
+    // const { startDate } = companyDetail
     return true
   }
   async getCompanyDetail(html: string) {
@@ -61,5 +62,31 @@ export default class CongTyDoanhNghiepDriver extends DriverBase {
       // const currentList = blackList[blackListKey]
     }
     return true
+  }
+  protected async crawl($: cheerio.CheerioAPI) {
+    const $phone = await this.crawlProperty($, 'selectors.companyDetail.phoneNumber')
+    const $name = await this.crawlProperty($, 'selectors.companyDetail.name')
+    let phoneNumber = ''
+    const imageBase64 = $phone?.first()?.attr('src')
+    const worker = await createWorker('eng')
+
+    await worker.setParameters({
+      tessedit_char_whitelist: '0123456789'
+    })
+    if (!imageBase64) {
+      phoneNumber = ''
+    } else {
+      const numberConverted = await worker.recognize(imageBase64)
+      phoneNumber = numberConverted.data.text
+    }
+
+    return {
+      name: $name?.first().text(),
+      founder: '',
+      phoneNumber: phoneNumber,
+      address: '',
+      taxCode: '',
+      startDate: ''
+    } as CompanyBaseDetail
   }
 }

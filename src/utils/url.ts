@@ -13,7 +13,7 @@ export class UrlExtractor {
     return this._url.hostname
   }
   get baseUrl() {
-    return `${this._url.protocol}//${this._url.host}`
+    return `${this._url.protocol}//${this._url.hostname.replace('https', '')}`
   }
   get url() {
     return this._url.toString()

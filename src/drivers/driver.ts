@@ -5,6 +5,14 @@ import * as cheerio from 'cheerio'
 import { ClientDateTimeString } from '@/types/datetime'
 import { CompanyFilters } from '@/types/request'
 export type NextPage = { nextPageIndex: number; nextPageUrl: string }
+export type BlackListSpecifier = {
+  list: string[]
+  validateType: 'includes' | 'startWith' | 'endWith'
+  ignoreCase?: boolean
+}
+export type BlackListObject = {
+  [_key in keyof CompanyBaseDetail]: BlackListSpecifier
+}
 export interface IDriver {
   combineLink(): string
   getCompanyLinks(_html: string): string[] | Promise<string[]>
@@ -12,6 +20,7 @@ export interface IDriver {
   nextPage(): NextPage
   checkStartDate(_detail: CompanyBaseDetail, _fromDate?: ClientDateTimeString): boolean | Promise<boolean>
   validateCompanyDetail(_detail: CompanyBaseDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
+  isInBlackList(_detail: CompanyBaseDetail): boolean | Promise<boolean>
 }
 export type CompanyBaseDetail = {
   name?: string
@@ -51,17 +60,17 @@ export abstract class DriverBase implements IDriver {
   protected async crawl($: cheerio.CheerioAPI) {
     const $phone = await this.crawlProperty($, 'selectors.companyDetail.phoneNumber')
     const $name = await this.crawlProperty($, 'selectors.companyDetail.name')
-    const $founder = await this.crawlProperty($, 'selectors.companyDetail.founder')
-    const $taxCode = await this.crawlProperty($, 'selectors.companyDetail.taxCode')
-    const $address = await this.crawlProperty($, 'selectors.companyDetail.address')
-    const $startDate = await this.crawlProperty($, 'selectors.companyDetail.startDate')
+    // const $founder = await this.crawlProperty($, 'selectors.companyDetail.founder')
+    // const $taxCode = await this.crawlProperty($, 'selectors.companyDetail.taxCode')
+    // const $address = await this.crawlProperty($, 'selectors.companyDetail.address')
+    // const $startDate = await this.crawlProperty($, 'selectors.companyDetail.startDate')
     return {
       name: $name?.first().text(),
-      founder: $founder?.first().text(),
+      founder: '',
       phoneNumber: $phone?.first().text() || '',
-      address: $address?.first().text(),
-      taxCode: $taxCode?.first().text(),
-      startDate: $startDate?.first().text()
+      address: '',
+      taxCode: '',
+      startDate: ''
     } as CompanyBaseDetail
   }
   combineLink(href?: string) {
@@ -72,4 +81,5 @@ export abstract class DriverBase implements IDriver {
   abstract nextPage(): NextPage
   abstract checkStartDate(_detail: CompanyBaseDetail, _fromDate?: ClientDateTimeString): boolean | Promise<boolean>
   abstract validateCompanyDetail(_detail: CompanyBaseDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
+  abstract isInBlackList(_detail: CompanyBaseDetail): boolean | Promise<boolean>
 }
