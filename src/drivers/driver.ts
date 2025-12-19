@@ -1,38 +1,19 @@
 import * as cheerio from 'cheerio'
-import fs from 'fs/promises'
-import path from 'path'
 
-import { ClientDateTimeString } from '@/types/datetime'
-import { CompanyFilters } from '@/types/request'
+import { ClientDateTimeString, CompanyDetail, CompanyFilters, DriverConfigSchema, NextPage } from '@/types'
 import { UrlExtractor } from '@/utils/url'
+import { readJsonWithSchema } from '@/utils/parser'
 
-export type NextPage = { nextPageIndex: number; nextPageUrl: string }
-export type BlackListSpecifier = {
-  list: string[]
-  validateType: Pick<string, 'includes' | 'startsWith' | 'endsWith'>
-  ignoreCase?: boolean
-}
-export type BlackListObject = {
-  [_key in keyof CompanyBaseDetail]: BlackListSpecifier
-}
 export interface IDriver {
   combineLink(): string
   getCompanyLinks(_html: string): string[] | Promise<string[]>
-  getCompanyDetail(_html: string): CompanyBaseDetail | Promise<CompanyBaseDetail>
+  getCompanyDetail(_html: string): (CompanyDetail | null) | Promise<CompanyDetail | null>
   nextPage(): NextPage
-  checkStartDate(_detail: CompanyBaseDetail, _fromDate?: ClientDateTimeString): boolean | Promise<boolean>
-  validate(_detail: CompanyBaseDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
-  isBlackListed(_detail: CompanyBaseDetail): boolean | Promise<boolean>
+  datetimeValidate(_detail: CompanyDetail, _fromDate?: ClientDateTimeString): boolean | Promise<boolean>
+  validate(_detail: CompanyDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
+  isBlackListed(_detail: CompanyDetail): boolean | Promise<boolean>
 }
 
-export type CompanyBaseDetail = {
-  name?: string
-  phoneNumber: string
-  taxCode?: string
-  address?: string
-  startDate?: string
-  founder?: string
-}
 export abstract class DriverBase implements IDriver {
   constructor(protected _urlExtractor: UrlExtractor) {
     this._urlExtractor = _urlExtractor
@@ -44,47 +25,54 @@ export abstract class DriverBase implements IDriver {
     if (logHtml) console.log(typeof html === 'string')
     return cheerio.load(typeof html === 'string' ? html : defaultValue)
   }
-  protected async loadDriverJson(name?: string) {
-    const fileName = name ?? `${this._urlExtractor.domain}.json`
-    const filePath = path.join(__dirname, 'jsons', fileName)
-    const json = await fs.readFile(filePath, 'utf-8')
-    return JSON.parse(json)
+  protected async loadDriverConfigs(driverConfigFilename?: string) {
+    const fileName = driverConfigFilename ?? `${this._urlExtractor.domain}.json`
+    const driverConfigs = await readJsonWithSchema(DriverConfigSchema, 'jsons', fileName)
+    return driverConfigs
   }
-  protected async getProperty(path: string, defaultValue?: string, seperator: string = '.') {
-    const obj = await this.loadDriverJson()
-    const result = path.split(seperator).reduce((acc, key) => acc?.[key], obj)
-    return result ?? defaultValue
-  }
-  protected async crawlProperty($: cheerio.CheerioAPI, selectorKey: string) {
-    const selector = await this.getProperty(selectorKey)
-    if (selector) return $(selector)
-    else return undefined
-  }
-  protected async crawl($: cheerio.CheerioAPI): Promise<CompanyBaseDetail> {
-    const getText = async (key: string, fallback: string = '') => {
-      const $el = await this.crawlProperty($, `selectors.companyDetail.${key}`)
-      const text = $el?.first().text()
-      return text ?? fallback
+  // protected async getProperty(path: string, defaultValue?: string, seperator: string = '.') {
+  //   const obj = await this.loadDriverConfigs()
+  //   const result = path.split(seperator).reduce((acc, key) => acc?.[key], obj)
+  //   return result ?? defaultValue
+  // }
+  // protected async crawlProperty($: cheerio.CheerioAPI, selectorKey: string) {
+  //   const selector = await this.getProperty(selectorKey)
+  //   if (selector) return $(selector)
+  //   else return undefined
+  // }
+  protected async crawl($: cheerio.CheerioAPI): Promise<CompanyDetail | null> {
+    const driverLoader = await this.loadDriverConfigs()
+    if (driverLoader?.isSuccess) {
+      const { companyDetail: companyDetailSelectors } = driverLoader.data.selectors
+      const getText = (key: keyof typeof companyDetailSelectors) => $(companyDetailSelectors[key]).first().text()
+      return {
+        name: getText('name'),
+        phoneNumber: getText('phoneNumber'),
+        founder: getText('founder'),
+        address: getText('address'),
+        taxCode: getText('taxCode'),
+        startDate: getText('startDate')
+      }
+    } else {
+      // load driver json file failed
+      return null
     }
-
-    const [name, founder, phoneNumber, address, taxCode, startDate] = await Promise.all([
-      getText('name'),
-      getText('founder'),
-      getText('phoneNumber'),
-      getText('address'),
-      getText('taxCode'),
-      getText('startDate')
-    ])
-
-    return { name, founder, phoneNumber: phoneNumber ?? '', address, taxCode, startDate }
   }
   combineLink(href?: string) {
     return `${this._urlExtractor.baseUrl}${href}`
   }
-  abstract getCompanyLinks(_html: string): string[] | Promise<string[]>
-  abstract getCompanyDetail(_html: string): CompanyBaseDetail | Promise<CompanyBaseDetail>
+  async getCompanyLinks(html: string): Promise<string[]> {
+    const $ = this.loadHtml(html)
+    const configs = await this.loadDriverConfigs()
+    if (!configs.isSuccess) return []
+    const anchors = $(configs.data.selectors.companyLinks)
+    const links = anchors.map((_, a) => this.combineLink($(a).attr('href')))
+    return links.toArray()
+  }
+  abstract getCompanyDetail(_html: string): (CompanyDetail | null) | Promise<CompanyDetail | null>
   abstract nextPage(): NextPage
-  abstract checkStartDate(_detail: CompanyBaseDetail, _fromDate?: ClientDateTimeString): boolean | Promise<boolean>
-  abstract validate(_detail: CompanyBaseDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
-  abstract isBlackListed(_detail: CompanyBaseDetail): boolean | Promise<boolean>
+  abstract datetimeValidate(_detail: CompanyDetail, _fromDate?: ClientDateTimeString): boolean | Promise<boolean>
+  abstract validate(_detail: CompanyDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
+  abstract isBlackListed(_detail: CompanyDetail): boolean | Promise<boolean>
 }
+export { CompanyDetail, NextPage }

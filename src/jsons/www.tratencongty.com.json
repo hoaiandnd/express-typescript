@@ -8,7 +8,7 @@
     "companyDetail": {
       "name": "body > div > div.col-sm-9 > div.jumbotron > h4 > a > span",
       "founder": "",
-      "taxCode": "",
+      "taxCode": "body > div > div.col-sm-9 > div.jumbotron > a > img",
       "phoneNumber": "body > div > div.col-sm-9 > div.jumbotron > img",
       "address": "",
       "startDate": ""

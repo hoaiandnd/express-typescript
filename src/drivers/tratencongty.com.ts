@@ -1,12 +1,13 @@
-import { BlackListObject, BlackListSpecifier, CompanyBaseDetail, DriverBase, NextPage } from '@/drivers/driver'
-import { ClientDateTimeString } from '@/types/datetime'
-import { CompanyFilters } from '@/types/request'
-import { UrlExtractor } from '@/utils/url'
 import * as cheerio from 'cheerio'
 import { createWorker } from 'tesseract.js'
 
+import { DriverBase } from '@/drivers/driver'
+import { ClientDateTimeString, CompanyDetail, CompanyFilters, NextPage } from '@/types'
+import { UrlExtractor } from '@/utils/url'
+import { parseNumberFromImage } from '@/utils/parser'
+
 export default class TraTenCongTyDriver extends DriverBase {
-  async validate(detail: CompanyBaseDetail, _filter?: CompanyFilters) {
+  async validate(detail: CompanyDetail, _filter?: CompanyFilters) {
     const isBlackListed = await this.isBlackListed(detail)
     if (isBlackListed) return false
     return true
@@ -30,16 +31,15 @@ export default class TraTenCongTyDriver extends DriverBase {
   constructor(protected _urlExtractor: UrlExtractor) {
     super(_urlExtractor)
   }
-  async getCompanyLinks(html: string) {
-    const $ = this.loadHtml(html)
-    const companyLinkSelectors = await this.getProperty('selectors.companyLinks')
-    const anchors = $(companyLinkSelectors)
-    const links = anchors.map((_, a) => this.combineLink($(a).attr('href')))
-    return links.toArray()
-  }
-  async checkStartDate(companyDetail: CompanyBaseDetail, fromDate?: ClientDateTimeString) {
-    if (!fromDate) return true
-    // const { startDate } = companyDetail
+  // async getCompanyLinks(html: string) {
+  //   const $ = this.loadHtml(html)
+  //   const configs = await this.loadDriverConfigs()
+  //   if (!configs.isSuccess) return []
+  //   const anchors = $(configs.data.selectors.companyLinks)
+  //   const links = anchors.map((_, a) => this.combineLink($(a).attr('href')))
+  //   return links.toArray()
+  // }
+  async datetimeValidate(_companyDetail: CompanyDetail, _fromDate?: ClientDateTimeString) {
     return true
   }
   async getCompanyDetail(html: string) {
@@ -50,7 +50,7 @@ export default class TraTenCongTyDriver extends DriverBase {
   combineLink(href?: string) {
     return href ?? ''
   }
-  async isBlackListed(detail: CompanyBaseDetail) {
+  async isBlackListed(detail: CompanyDetail) {
     // const json = await this.getProperty('blackList')
     // const blackList = JSON.parse(json) as BlackListObject
 
@@ -73,29 +73,25 @@ export default class TraTenCongTyDriver extends DriverBase {
   }
   // override base method
   protected async crawl($: cheerio.CheerioAPI) {
-    const $phone = await this.crawlProperty($, 'selectors.companyDetail.phoneNumber')
-    const $name = await this.crawlProperty($, 'selectors.companyDetail.name')
-    let phoneNumber = ''
-    const imageBase64 = $phone?.first()?.attr('src')
-    const worker = await createWorker('eng')
-
-    await worker.setParameters({
-      tessedit_char_whitelist: '0123456789'
-    })
-    if (!imageBase64) {
-      phoneNumber = ''
-    } else {
-      const numberConverted = await worker.recognize(imageBase64)
-      phoneNumber = numberConverted.data.text
+    const configs = await this.loadDriverConfigs()
+    if (!configs?.isSuccess) return null
+    const getNumber = async (selectorKey: keyof typeof configs.data.selectors.companyDetail) => {
+      const $number = $(configs.data.selectors.companyDetail[selectorKey])
+      const imageBase64 = $number?.first()?.attr('src')
+      const number = await parseNumberFromImage(imageBase64)
+      return number
     }
 
+    const phoneNumber = await getNumber('phoneNumber')
+    const taxCode = await getNumber('taxCode')
+    const $name = $(configs.data.selectors.companyDetail.name)
     return {
       name: $name?.first().text(),
       founder: '',
-      phoneNumber: phoneNumber,
+      phoneNumber,
       address: '',
-      taxCode: '',
+      taxCode,
       startDate: ''
-    } as CompanyBaseDetail
+    } as CompanyDetail
   }
 }

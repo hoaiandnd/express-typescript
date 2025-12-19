@@ -1,13 +1,14 @@
-import { CompanyBaseDetail, DriverBase } from '@/drivers/driver'
+import { DriverBase } from '@/drivers/driver'
 import { loadConfigs } from '@/loaders'
+import { CompanyDetail } from '@/types'
 import { CompanyFilters } from '@/types/request'
 import { crawler } from '@/utils/config'
 import pLimit from 'p-limit'
-export type TransformFunc<TResult = any> = (detail: CompanyBaseDetail | null) => TResult
+export type TransformFunc<TResult = any> = (detail: CompanyDetail | null) => TResult
 export type FetchConfig<TTransformResult> = {
   filters?: CompanyFilters
   tranformFn?: TransformFunc<TTransformResult>
-  filterFn?: (data: CompanyBaseDetail | null) => boolean
+  filterFn?: (data: CompanyDetail | null) => boolean
 }
 
 export abstract class FetcherBase {
@@ -66,11 +67,11 @@ export class Fetcher extends FetcherBase {
   }
   async multiplePageFetch<TTransformResult = any>(config?: FetchConfig<TTransformResult>) {
     let MAX_PAGE_COUNT = (await loadConfigs('maxPageCount')) ?? 10
-    const results = [] as (CompanyBaseDetail | TTransformResult | null)[]
+    const results = [] as (CompanyDetail | TTransformResult | null)[]
     while (--MAX_PAGE_COUNT) {
       console.log('Dang cao du lieu')
       const pageResult = await this.fetchCompanyDetails(config?.filters)
-      const data = pageResult.pageResult.reduce<(CompanyBaseDetail | TTransformResult | null)[]>((acc, item) => {
+      const data = pageResult.pageResult.reduce<(CompanyDetail | TTransformResult | null)[]>((acc, item) => {
         if (!config?.filterFn || config?.filterFn?.(item)) {
           acc.push(config?.tranformFn ? config.tranformFn(item) : item)
         }

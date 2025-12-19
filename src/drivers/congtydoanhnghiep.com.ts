@@ -1,4 +1,4 @@
-import { BlackListObject, CompanyBaseDetail, DriverBase, NextPage } from '@/drivers/driver'
+import { CompanyDetail, DriverBase, NextPage } from '@/drivers/driver'
 import { ClientDateTimeString } from '@/types/datetime'
 import { CompanyFilters } from '@/types/request'
 import { UrlExtractor } from '@/utils/url'
@@ -11,7 +11,7 @@ export class CongTyDoanhNghiepSelector {
 }
 
 export default class CongTyDoanhNghiepDriver extends DriverBase {
-  validate(detail: CompanyBaseDetail, filter?: CompanyFilters): boolean | Promise<boolean> {
+  validate(detail: CompanyDetail, filter?: CompanyFilters): boolean | Promise<boolean> {
     // if (detail.phoneNumber.startsWith('02')) return false
     // else if (
     //   detail.name?.toLowerCase()?.includes('chi nhánh') ||
@@ -34,14 +34,15 @@ export default class CongTyDoanhNghiepDriver extends DriverBase {
   constructor(protected _urlExtractor: UrlExtractor) {
     super(_urlExtractor)
   }
-  async getCompanyLinks(html: string) {
-    const $ = this.loadHtml(html)
-    const companyLinkSelectors = await this.getProperty('selectors.companyLinks')
-    const anchors = $(companyLinkSelectors)
-    const links = anchors.map((_, a) => this.combineLink($(a).attr('href')))
-    return links.toArray()
-  }
-  async checkStartDate(companyDetail: CompanyBaseDetail, fromDate?: ClientDateTimeString) {
+  // async getCompanyLinks(html: string) {
+  //   const $ = this.loadHtml(html)
+  //   const configs = await this.loadDriverConfigs()
+  //   if (!configs.isSuccess) return []
+  //   const anchors = $(configs.data.selectors.companyLinks)
+  //   const links = anchors.map((_, a) => this.combineLink($(a).attr('href')))
+  //   return links.toArray()
+  // }
+  async datetimeValidate(companyDetail: CompanyDetail, fromDate?: ClientDateTimeString) {
     if (!fromDate) return true
     const { startDate } = companyDetail
     return true
@@ -54,12 +55,12 @@ export default class CongTyDoanhNghiepDriver extends DriverBase {
   combineLink(href?: string) {
     return `${this._urlExtractor.baseUrl}${href}`
   }
-  async isBlackListed(detail: CompanyBaseDetail) {
-    const json = await this.getProperty('blackList')
-    const blackList = JSON.parse(json) as BlackListObject
-    for (const blackListKey in blackList) {
-      // const currentList = blackList[blackListKey]
-    }
+  async isBlackListed(detail: CompanyDetail) {
+    // const json = await this.getProperty('blackList')
+    // const blackList = JSON.parse(json) as BlackListObject
+    // for (const blackListKey in blackList) {
+    //   // const currentList = blackList[blackListKey]
+    // }
     return true
   }
 }
