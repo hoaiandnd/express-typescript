@@ -1,13 +1,15 @@
-import { UrlExtractor } from '@/utils/url'
-import path from 'path'
-import fs from 'fs/promises'
 import * as cheerio from 'cheerio'
+import fs from 'fs/promises'
+import path from 'path'
+
 import { ClientDateTimeString } from '@/types/datetime'
 import { CompanyFilters } from '@/types/request'
+import { UrlExtractor } from '@/utils/url'
+
 export type NextPage = { nextPageIndex: number; nextPageUrl: string }
 export type BlackListSpecifier = {
   list: string[]
-  validateType: 'includes' | 'startWith' | 'endWith'
+  validateType: Pick<string, 'includes' | 'startsWith' | 'endsWith'>
   ignoreCase?: boolean
 }
 export type BlackListObject = {
@@ -19,9 +21,10 @@ export interface IDriver {
   getCompanyDetail(_html: string): CompanyBaseDetail | Promise<CompanyBaseDetail>
   nextPage(): NextPage
   checkStartDate(_detail: CompanyBaseDetail, _fromDate?: ClientDateTimeString): boolean | Promise<boolean>
-  validateCompanyDetail(_detail: CompanyBaseDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
-  isInBlackList(_detail: CompanyBaseDetail): boolean | Promise<boolean>
+  validate(_detail: CompanyBaseDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
+  isBlackListed(_detail: CompanyBaseDetail): boolean | Promise<boolean>
 }
+
 export type CompanyBaseDetail = {
   name?: string
   phoneNumber: string
@@ -57,21 +60,23 @@ export abstract class DriverBase implements IDriver {
     if (selector) return $(selector)
     else return undefined
   }
-  protected async crawl($: cheerio.CheerioAPI) {
-    const $phone = await this.crawlProperty($, 'selectors.companyDetail.phoneNumber')
-    const $name = await this.crawlProperty($, 'selectors.companyDetail.name')
-    // const $founder = await this.crawlProperty($, 'selectors.companyDetail.founder')
-    // const $taxCode = await this.crawlProperty($, 'selectors.companyDetail.taxCode')
-    // const $address = await this.crawlProperty($, 'selectors.companyDetail.address')
-    // const $startDate = await this.crawlProperty($, 'selectors.companyDetail.startDate')
-    return {
-      name: $name?.first().text(),
-      founder: '',
-      phoneNumber: $phone?.first().text() || '',
-      address: '',
-      taxCode: '',
-      startDate: ''
-    } as CompanyBaseDetail
+  protected async crawl($: cheerio.CheerioAPI): Promise<CompanyBaseDetail> {
+    const getText = async (key: string, fallback: string = '') => {
+      const $el = await this.crawlProperty($, `selectors.companyDetail.${key}`)
+      const text = $el?.first().text()
+      return text ?? fallback
+    }
+
+    const [name, founder, phoneNumber, address, taxCode, startDate] = await Promise.all([
+      getText('name'),
+      getText('founder'),
+      getText('phoneNumber'),
+      getText('address'),
+      getText('taxCode'),
+      getText('startDate')
+    ])
+
+    return { name, founder, phoneNumber: phoneNumber ?? '', address, taxCode, startDate }
   }
   combineLink(href?: string) {
     return `${this._urlExtractor.baseUrl}${href}`
@@ -80,6 +85,6 @@ export abstract class DriverBase implements IDriver {
   abstract getCompanyDetail(_html: string): CompanyBaseDetail | Promise<CompanyBaseDetail>
   abstract nextPage(): NextPage
   abstract checkStartDate(_detail: CompanyBaseDetail, _fromDate?: ClientDateTimeString): boolean | Promise<boolean>
-  abstract validateCompanyDetail(_detail: CompanyBaseDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
-  abstract isInBlackList(_detail: CompanyBaseDetail): boolean | Promise<boolean>
+  abstract validate(_detail: CompanyBaseDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
+  abstract isBlackListed(_detail: CompanyBaseDetail): boolean | Promise<boolean>
 }

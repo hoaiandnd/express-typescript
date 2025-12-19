@@ -4,7 +4,7 @@
   "dateFormatInUse": "dd-mm-yyyy",
   "supportedExportFormat": ["csv", "docx"],
   "selectors": {
-    "companyLinks": "body div div.col-sm-9 div:nth-child(3) div.search-results a",
+    "companyLinks": "body > div > div.col-sm-9 > div:nth-child(3) > div.search-results > a",
     "companyDetail": {
       "name": "body > div > div.col-sm-9 > div.jumbotron > h4 > a > span",
       "founder": "",
@@ -22,7 +22,7 @@
     },
     "phoneNumber": {
       "list": ["02"],
-      "validateType": "startWith",
+      "validateType": "startsWith",
       "ignoreCase": true
     }
   },

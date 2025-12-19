@@ -1,3 +1,4 @@
 {
-  "supportedDomains": ["congtydoanhnghiep.com", "doanhnghiep.biz", "tratencongty.com"]
+  "supportedDomains": ["congtydoanhnghiep.com", "doanhnghiep.biz", "www.tratencongty.com"],
+  "maxPageCount": 5
 }

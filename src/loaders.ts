@@ -28,3 +28,9 @@ export async function supportedDomainsLoader(req: Request) {
     return null
   }
 }
+export async function loadConfigs(key?: string) {
+  const filePath = path.join(__dirname, 'configs.json')
+  const read = await fs.readFile(filePath, 'utf-8')
+  const json = JSON.parse(read)
+  return key ? json[key] : json
+}

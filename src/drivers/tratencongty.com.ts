@@ -1,4 +1,4 @@
-import { BlackListObject, CompanyBaseDetail, DriverBase, NextPage } from '@/drivers/driver'
+import { BlackListObject, BlackListSpecifier, CompanyBaseDetail, DriverBase, NextPage } from '@/drivers/driver'
 import { ClientDateTimeString } from '@/types/datetime'
 import { CompanyFilters } from '@/types/request'
 import { UrlExtractor } from '@/utils/url'
@@ -6,13 +6,9 @@ import * as cheerio from 'cheerio'
 import { createWorker } from 'tesseract.js'
 
 export default class TraTenCongTyDriver extends DriverBase {
-  validateCompanyDetail(detail: CompanyBaseDetail, filter?: CompanyFilters): boolean | Promise<boolean> {
-    // if (detail.phoneNumber.startsWith('02')) return false
-    // else if (
-    //   detail.name?.toLowerCase()?.includes('chi nhánh') ||
-    //   detail.name?.toLowerCase()?.includes('văn phòng đại diện')
-    // )
-    //   return false
+  async validate(detail: CompanyBaseDetail, _filter?: CompanyFilters) {
+    const isBlackListed = await this.isBlackListed(detail)
+    if (isBlackListed) return false
     return true
   }
   nextPage(): NextPage {
@@ -29,7 +25,6 @@ export default class TraTenCongTyDriver extends DriverBase {
       this._urlExtractor.urlObj.searchParams.delete('page')
     }
     const result = { nextPageUrl: this._urlExtractor.url, nextPageIndex: nextPage }
-    console.log(result.nextPageUrl)
     return result
   }
   constructor(protected _urlExtractor: UrlExtractor) {
@@ -53,16 +48,30 @@ export default class TraTenCongTyDriver extends DriverBase {
     return crawlResult
   }
   combineLink(href?: string) {
-    return `${this._urlExtractor.baseUrl}${href}`
+    return href ?? ''
   }
-  async isInBlackList(detail: CompanyBaseDetail) {
-    const json = await this.getProperty('blackList')
-    const blackList = JSON.parse(json) as BlackListObject
-    for (const blackListKey in blackList) {
-      // const currentList = blackList[blackListKey]
-    }
+  async isBlackListed(detail: CompanyBaseDetail) {
+    // const json = await this.getProperty('blackList')
+    // const blackList = JSON.parse(json) as BlackListObject
+
+    // for (const [blackListKey, currentList] of Object.entries(blackList)) {
+    //   const detailValue = detail[blackListKey as keyof BlackListObject]
+    //   const isBlacklisted = currentList.list.some(item => {
+    //     const validateMethod = {
+    //       includes: (s: string, v: string) =>
+    //         currentList.ignoreCase ? s.toLowerCase().includes(v.toLowerCase()) : s.includes(v),
+    //       startsWith: (s: string, v: string) =>
+    //         currentList.ignoreCase ? s.toLowerCase().startsWith(v.toLowerCase()) : s.includes(v),
+    //       endsWith: (s: string, v: string) =>
+    //         currentList.ignoreCase ? s.toLowerCase().endsWith(v.toLowerCase()) : s.includes(v)
+    //     }
+    //     return validateMethod[currentList.validateType as keyof typeof validateMethod](detailValue ?? '', item)
+    //   })
+    //   if (isBlacklisted) return false
+    // }
     return true
   }
+  // override base method
   protected async crawl($: cheerio.CheerioAPI) {
     const $phone = await this.crawlProperty($, 'selectors.companyDetail.phoneNumber')
     const $name = await this.crawlProperty($, 'selectors.companyDetail.name')

@@ -11,7 +11,7 @@ export class CongTyDoanhNghiepSelector {
 }
 
 export default class CongTyDoanhNghiepDriver extends DriverBase {
-  validateCompanyDetail(detail: CompanyBaseDetail, filter?: CompanyFilters): boolean | Promise<boolean> {
+  validate(detail: CompanyBaseDetail, filter?: CompanyFilters): boolean | Promise<boolean> {
     // if (detail.phoneNumber.startsWith('02')) return false
     // else if (
     //   detail.name?.toLowerCase()?.includes('chi nhánh') ||
@@ -54,7 +54,7 @@ export default class CongTyDoanhNghiepDriver extends DriverBase {
   combineLink(href?: string) {
     return `${this._urlExtractor.baseUrl}${href}`
   }
-  async isInBlackList(detail: CompanyBaseDetail) {
+  async isBlackListed(detail: CompanyBaseDetail) {
     const json = await this.getProperty('blackList')
     const blackList = JSON.parse(json) as BlackListObject
     for (const blackListKey in blackList) {

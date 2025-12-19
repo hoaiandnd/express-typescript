@@ -7,6 +7,7 @@ export class UrlExtractor {
     this._originalUrl = url
   }
   get urlObj() {
+    console.log(`UrlExtractor::urlObj (getter): ${this._url.toString()}`)
     return this._url
   }
   get domain() {
@@ -24,14 +25,14 @@ export class UrlExtractor {
   set pathName(path: string) {
     this._url.pathname = path
   }
-  gotoNextPage(
-    pageFinderGroupRegex: RegExp,
-    pathNameReplaceCallback: (isMatch: boolean, nextPage: number) => string
-  ): string {
-    const { pathname } = this._url
-    const [, page] = pathname.match(pageFinderGroupRegex) || []
-    const nextPage = page ? +page + 1 : 2
-    this._url.pathname = pathNameReplaceCallback(!!page, nextPage)
-    return this._url.toString()
-  }
+  // gotoNextPage(
+  //   pageFinderGroupRegex: RegExp,
+  //   pathNameReplaceCallback: (isMatch: boolean, nextPage: number) => string
+  // ): string {
+  //   const { pathname } = this._url
+  //   const [, page] = pathname.match(pageFinderGroupRegex) || []
+  //   const nextPage = page ? +page + 1 : 2
+  //   this._url.pathname = pathNameReplaceCallback(!!page, nextPage)
+  //   return this._url.toString()
+  // }
 }
