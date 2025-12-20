@@ -7,7 +7,6 @@ export class UrlExtractor {
     this._originalUrl = url
   }
   get urlObj() {
-    console.log(`UrlExtractor::urlObj (getter): ${this._url.toString()}`)
     return this._url
   }
   get domain() {

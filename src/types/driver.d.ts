@@ -29,7 +29,10 @@ export const DriverConfigRuleSchema = z.object({
   ignoreCase: z.boolean().optional()
 })
 
-export const DriverConfigBlackListSchema = z.record(DriverConfigCompanyDetailSchema, DriverConfigRuleSchema)
+export const DriverConfigBlackListSchema = z.record(
+  DriverConfigCompanyDetailSchema.keyof(),
+  DriverConfigRuleSchema.optional()
+)
 
 export const DriverConfigSchema = z.object({
   name: z.string(),
@@ -37,7 +40,7 @@ export const DriverConfigSchema = z.object({
   dateFormatInUse: z.string(),
   supportedExportFormat: z.array(z.string()),
   selectors: DriverConfigSelectorSchema,
-  blackList: DriverConfigBlackListSchema
+  blackList: DriverConfigBlackListSchema.optional()
 })
 export type DriverConfig = z.infer<typeof DriverConfigSchema>
 export type DriverConfigBlackList = z.infer<typeof DriverConfigBlackListSchema>

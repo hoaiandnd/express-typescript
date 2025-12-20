@@ -1,10 +1,6 @@
 import { supportedDomainsLoader } from '@/loaders'
 import express from 'express'
-import * as cheerio from 'cheerio'
-import pLimit from 'p-limit'
-import { crawler } from '@/utils/config'
 import { Fetcher } from '@/fetcher'
-import CongTyDoanhNghiepDriver from '@/drivers/congtydoanhnghiep.com'
 import { CompanyFilters } from '@/types/request'
 import TraTenCongTyDriver from '@/drivers/tratencongty.com'
 
@@ -20,11 +16,11 @@ app.post('/', async (req, res) => {
     const fetcher = new Fetcher(new TraTenCongTyDriver(urlExtractor))
     const companyDetails = await fetcher.multiplePageFetch({
       filters,
-      tranformFn: (detail) => ({
+      tranformFn: detail => ({
         name: detail?.name,
-        phone: detail?.phoneNumber
-      }),
-      filterFn: (detail) => true
+        phone: detail?.phoneNumber,
+        taxCode: detail?.taxCode
+      })
     })
     res.json(companyDetails)
   } else res.status(400).json('Ten mien chua co driver nao dang ky. Hay dang ky trong configs.json')

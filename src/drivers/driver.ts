@@ -30,27 +30,17 @@ export abstract class DriverBase implements IDriver {
     const driverConfigs = await readJsonWithSchema(DriverConfigSchema, 'jsons', fileName)
     return driverConfigs
   }
-  // protected async getProperty(path: string, defaultValue?: string, seperator: string = '.') {
-  //   const obj = await this.loadDriverConfigs()
-  //   const result = path.split(seperator).reduce((acc, key) => acc?.[key], obj)
-  //   return result ?? defaultValue
-  // }
-  // protected async crawlProperty($: cheerio.CheerioAPI, selectorKey: string) {
-  //   const selector = await this.getProperty(selectorKey)
-  //   if (selector) return $(selector)
-  //   else return undefined
-  // }
   protected async crawl($: cheerio.CheerioAPI): Promise<CompanyDetail | null> {
     const driverLoader = await this.loadDriverConfigs()
     if (driverLoader?.isSuccess) {
       const { companyDetail: companyDetailSelectors } = driverLoader.data.selectors
-      const getText = (key: keyof typeof companyDetailSelectors) => $(companyDetailSelectors[key]).first().text()
+      const getText = (key: keyof typeof companyDetailSelectors) => $(companyDetailSelectors[key]).first().text().trim()
       return {
         name: getText('name'),
-        phoneNumber: getText('phoneNumber'),
+        phoneNumber: getText('phoneNumber').replace('\n', ''),
         founder: getText('founder'),
         address: getText('address'),
-        taxCode: getText('taxCode'),
+        taxCode: getText('taxCode').replace('\n', ''),
         startDate: getText('startDate')
       }
     } else {

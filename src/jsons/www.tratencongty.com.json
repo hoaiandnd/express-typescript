@@ -16,12 +16,12 @@
   },
   "blackList": {
     "name": {
-      "list": ["Chi nhánh", "văn phòng đại diện", "Ủy ban", "Hợp tác xã", "Doanh nghiệp tư nhân"],
+      "rules": ["Chi nhánh", "văn phòng đại diện", "Ủy ban", "Hợp tác xã", "Doanh nghiệp tư nhân"],
       "validateType": "includes",
       "ignoreCase": true
     },
     "phoneNumber": {
-      "list": ["02"],
+      "rules": ["02"],
       "validateType": "startsWith",
       "ignoreCase": true
     }

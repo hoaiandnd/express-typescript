@@ -1,5 +1,4 @@
 import * as cheerio from 'cheerio'
-import { createWorker } from 'tesseract.js'
 
 import { DriverBase } from '@/drivers/driver'
 import { ClientDateTimeString, CompanyDetail, CompanyFilters, NextPage } from '@/types'

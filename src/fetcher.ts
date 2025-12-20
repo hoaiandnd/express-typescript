@@ -37,29 +37,13 @@ export class Fetcher extends FetcherBase {
   protected async fetchCompanyDetail(companyLink: string, filters?: CompanyFilters) {
     const html = await this.fetchHtml(companyLink)
     const result = await this.driver.getCompanyDetail(html)
-    if (!this.driver.validate(result, filters)) {
+    if (result && !this.driver.validate(result, filters)) {
       return null
     }
     return result
   }
   async fetchCompanyDetails(filters?: CompanyFilters) {
     const links = await this.fetchCompanyLinks()
-    // if (links.length <= 0)
-    //   return {
-    //     nextPage: this.driver.nextPage(),
-    //     pageResult: [] as CompanyBaseDetail[]
-    //   }
-
-    // //  kiểm tra theo ngày
-    // const finalCompanyLink = links[links.length - 1]
-    // const finalCompanyDetail = await this.fetchCompanyDetail(finalCompanyLink, filters)
-    // // thong tin cuoi cung khong thoa ma dieu kien ngay tim kiem
-    // if (!finalCompanyDetail)
-    //   return {
-    //     nextPage: this.driver.nextPage(),
-    //     pageResult: [] as CompanyBaseDetail[]
-    //   }
-
     const limit = pLimit(10)
     const fetchPromises = links.map(link => limit(() => this.fetchCompanyDetail(link)))
     const fetchPromisesResult = await Promise.all(fetchPromises)
@@ -68,7 +52,7 @@ export class Fetcher extends FetcherBase {
   async multiplePageFetch<TTransformResult = any>(config?: FetchConfig<TTransformResult>) {
     let MAX_PAGE_COUNT = (await loadConfigs('maxPageCount')) ?? 10
     const results = [] as (CompanyDetail | TTransformResult | null)[]
-    while (--MAX_PAGE_COUNT) {
+    while (MAX_PAGE_COUNT) {
       console.log('Dang cao du lieu')
       const pageResult = await this.fetchCompanyDetails(config?.filters)
       const data = pageResult.pageResult.reduce<(CompanyDetail | TTransformResult | null)[]>((acc, item) => {
@@ -79,9 +63,9 @@ export class Fetcher extends FetcherBase {
       }, [])
       results.push(...data)
 
-      // const next = this.driver.nextPage()
-      console.log('Tiep tuc voi trang ' + pageResult.nextPage.nextPageIndex)
       console.log('Ket thuc cao du lieu')
+      console.log('Tiep tuc voi trang ' + pageResult.nextPage.nextPageIndex)
+      MAX_PAGE_COUNT--
     }
     return results
   }
