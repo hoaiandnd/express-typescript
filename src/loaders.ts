@@ -20,8 +20,8 @@ async function isDomainSupported(url: string) {
 }
 export async function supportedDomainsLoader(req: Request) {
   const parseResult = parseJsonWithSchema(CompanyRequestFiltersSchema, req.body)
-  if (parseResult.isSuccess === false) {
-    console.log('Cannot parse request body for type `CompanyRequestFilters`')
+  if (!parseResult.isSuccess) {
+    console.error('Cannot parse request body for type `CompanyRequestFilters`')
     return null
   }
   const isSupported = await isDomainSupported(parseResult.data.url)

@@ -15,7 +15,7 @@ app.post('/', async (req, res) => {
     const filters = req.body as CompanyRequestFilters
     const fetcher = new Fetcher(new TraTenCongTyDriver(urlExtractor))
     const companyDetails = await fetcher.multiplePageFetch({
-      filters,
+      requestFilters: filters,
       tranformFn: detail => ({
         name: detail?.name,
         phone: detail?.phoneNumber,

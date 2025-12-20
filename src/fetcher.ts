@@ -1,14 +1,12 @@
 import { DriverBase } from '@/drivers/driver'
-import { loadConfigs } from '@/loaders'
-import { CompanyDetail } from '@/types'
-import { CompanyRequestFilters } from '@/types/request'
+import { CompanyDetail, CompanyRequestFilters } from '@/types'
 import { crawler } from '@/utils/config'
 import pLimit from 'p-limit'
-export type TransformFunc<TResult = any> = (detail: CompanyDetail | null) => TResult
+export type TransformFunc<TResult = any> = (_detail: CompanyDetail | null) => TResult
 export type FetchConfig<TTransformResult> = {
-  filters?: CompanyRequestFilters
+  requestFilters?: CompanyRequestFilters
   tranformFn?: TransformFunc<TTransformResult>
-  filterFn?: (data: CompanyDetail | null) => boolean
+  filterFn?: (_data: CompanyDetail | null) => boolean
 }
 
 export abstract class FetcherBase {
@@ -22,7 +20,7 @@ export abstract class FetcherBase {
       const resHtml = response.data
       return resHtml ?? 'NO_RESPONSE_DATA'
     } catch (err) {
-      console.log('FETCH_FAILED')
+      console.error((err as Error).message)
       return ''
     }
   }
@@ -50,11 +48,11 @@ export class Fetcher extends FetcherBase {
     return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult }
   }
   async multiplePageFetch<TTransformResult = any>(config?: FetchConfig<TTransformResult>) {
-    let MAX_PAGE_COUNT = (await loadConfigs('maxPageCount')) ?? 10
+    let maxPageCrawl = 10
     const results = [] as (CompanyDetail | TTransformResult | null)[]
-    while (MAX_PAGE_COUNT) {
+    while (maxPageCrawl) {
       console.log('Dang cao du lieu')
-      const pageResult = await this.fetchCompanyDetails(config?.filters)
+      const pageResult = await this.fetchCompanyDetails(config?.requestFilters)
       const data = pageResult.pageResult.reduce<(CompanyDetail | TTransformResult | null)[]>((acc, item) => {
         if (!config?.filterFn || config?.filterFn?.(item)) {
           acc.push(config?.tranformFn ? config.tranformFn(item) : item)
@@ -65,7 +63,7 @@ export class Fetcher extends FetcherBase {
 
       console.log('Ket thuc cao du lieu')
       console.log('Tiep tuc voi trang ' + pageResult.nextPage.nextPageIndex)
-      MAX_PAGE_COUNT--
+      maxPageCrawl--
     }
     return results
   }
