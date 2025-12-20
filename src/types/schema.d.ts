@@ -36,5 +36,12 @@ export const DriverConfigSchema = z.object({
 
 export const AppConfigSchema = z.object({
   supportedDomains: z.array(z.string()),
-  concurrencyRequestLimit: z.number().nullish()
+  concurrencyRequestLimit: z.number().nullish().optional()
+})
+
+export const CompanyRequestFiltersSchema = z.object({
+  url: z.string(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  limit: z.number().int().positive().optional()
 })

@@ -1,7 +1,7 @@
 import { supportedDomainsLoader } from '@/loaders'
 import express from 'express'
 import { Fetcher } from '@/fetcher'
-import { CompanyFilters } from '@/types/request'
+import { CompanyRequestFilters } from '@/types/request'
 import TraTenCongTyDriver from '@/drivers/tratencongty.com'
 
 const app = express()
@@ -12,7 +12,7 @@ app.use(express.json())
 app.post('/', async (req, res) => {
   const urlExtractor = await supportedDomainsLoader(req)
   if (!!urlExtractor) {
-    const filters = req.body as CompanyFilters
+    const filters = req.body as CompanyRequestFilters
     const fetcher = new Fetcher(new TraTenCongTyDriver(urlExtractor))
     const companyDetails = await fetcher.multiplePageFetch({
       filters,

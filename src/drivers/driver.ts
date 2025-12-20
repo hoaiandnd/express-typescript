@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio'
 
-import { ClientDateTimeString, CompanyDetail, CompanyFilters, DriverConfigSchema, NextPage } from '@/types'
+import { ClientDateTimeString, CompanyDetail, CompanyRequestFilters, DriverConfigSchema, NextPage } from '@/types'
 import { UrlExtractor } from '@/utils/url'
 import { readJsonWithSchema } from '@/utils/parser'
 
@@ -10,7 +10,7 @@ export interface IDriver {
   getCompanyDetail(_html: string): (CompanyDetail | null) | Promise<CompanyDetail | null>
   nextPage(): NextPage
   datetimeValidate(_detail: CompanyDetail, _fromDate?: ClientDateTimeString): boolean | Promise<boolean>
-  validate(_detail: CompanyDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
+  validate(_detail: CompanyDetail, _filter?: CompanyRequestFilters): boolean | Promise<boolean>
   isBlackListed(_detail: CompanyDetail): boolean | Promise<boolean>
 }
 
@@ -62,7 +62,7 @@ export abstract class DriverBase implements IDriver {
   abstract getCompanyDetail(_html: string): (CompanyDetail | null) | Promise<CompanyDetail | null>
   abstract nextPage(): NextPage
   abstract datetimeValidate(_detail: CompanyDetail, _fromDate?: ClientDateTimeString): boolean | Promise<boolean>
-  abstract validate(_detail: CompanyDetail, _filter?: CompanyFilters): boolean | Promise<boolean>
+  abstract validate(_detail: CompanyDetail, _filter?: CompanyRequestFilters): boolean | Promise<boolean>
   abstract isBlackListed(_detail: CompanyDetail): boolean | Promise<boolean>
 }
 export { CompanyDetail, NextPage }

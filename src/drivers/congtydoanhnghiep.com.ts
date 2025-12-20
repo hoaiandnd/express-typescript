@@ -1,6 +1,6 @@
 import { CompanyDetail, DriverBase, NextPage } from '@/drivers/driver'
 import { ClientDateTimeString } from '@/types/datetime'
-import { CompanyFilters } from '@/types/request'
+import { CompanyRequestFilters } from '@/types/request'
 import { UrlExtractor } from '@/utils/url'
 import * as cheerio from 'cheerio'
 
@@ -11,7 +11,7 @@ export class CongTyDoanhNghiepSelector {
 }
 
 export default class CongTyDoanhNghiepDriver extends DriverBase {
-  validate(detail: CompanyDetail, filter?: CompanyFilters): boolean | Promise<boolean> {
+  validate(detail: CompanyDetail, filter?: CompanyRequestFilters): boolean | Promise<boolean> {
     // if (detail.phoneNumber.startsWith('02')) return false
     // else if (
     //   detail.name?.toLowerCase()?.includes('chi nhánh') ||

@@ -1,12 +1,12 @@
 import * as cheerio from 'cheerio'
 
 import { DriverBase } from '@/drivers/driver'
-import { ClientDateTimeString, CompanyDetail, CompanyFilters, NextPage } from '@/types'
+import { ClientDateTimeString, CompanyDetail, CompanyRequestFilters, NextPage } from '@/types'
 import { UrlExtractor } from '@/utils/url'
 import { parseNumberFromImage } from '@/utils/parser'
 
 export default class TraTenCongTyDriver extends DriverBase {
-  async validate(detail: CompanyDetail, _filter?: CompanyFilters) {
+  async validate(detail: CompanyDetail, _filter?: CompanyRequestFilters) {
     const isBlackListed = await this.isBlackListed(detail)
     if (isBlackListed) return false
     return true

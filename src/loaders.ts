@@ -1,8 +1,8 @@
 // load supported domains
-import { AppConfigSchema } from '@/types'
-import { CompanyFilters } from '@/types/request'
+import { AppConfigSchema, CompanyRequestFiltersSchema } from '@/types'
+import { CompanyRequestFilters } from '@/types/request'
 import { readFile } from '@/utils/file'
-import { readJsonWithSchema } from '@/utils/parser'
+import { parseJsonWithSchema, readJsonWithSchema } from '@/utils/parser'
 import { UrlExtractor } from '@/utils/url'
 import { Request } from 'express'
 import fs from 'fs/promises'
@@ -19,15 +19,13 @@ async function isDomainSupported(url: string) {
   return supportedDomains.includes(urlExtractor.domain)
 }
 export async function supportedDomainsLoader(req: Request) {
-  const body = req.body
-  const filters = body as CompanyFilters
-  const { url } = filters
-  const isSupported = await isDomainSupported(url)
-  if (isSupported) {
-    return new UrlExtractor(url)
-  } else {
+  const parseResult = parseJsonWithSchema(CompanyRequestFiltersSchema, req.body)
+  if (parseResult.isSuccess === false) {
+    console.log('Cannot parse request body for type `CompanyRequestFilters`')
     return null
   }
+  const isSupported = await isDomainSupported(parseResult.data.url)
+  return isSupported ? parseResult.data.url : null
 }
 export async function loadConfigs(key?: string) {
   const filePath = path.join(__dirname, 'configs.json')

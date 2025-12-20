@@ -1,4 +1,5 @@
-import { ClientDateTimeString } from '@/types/datetime'
+import { CompanyRequestFiltersSchema } from '@/types'
+import z from 'zod'
 
 /**
  * Các tiêu chí được client gửi về để lọc dữ liệu công ty.
@@ -10,9 +11,4 @@ import { ClientDateTimeString } from '@/types/datetime'
  * @property `to` - optional - Thời gian kết thúc lọc (tính theo giây)
  * @property `limit` - optional - Số lượng bản ghi tối đa trả về
  */
-export interface CompanyFilters {
-  url: string
-  from?: ClientDateTimeString
-  to?: ClientDateTimeString
-  limit?: number
-}
+export type CompanyRequestFilters = z.infer<typeof CompanyRequestFiltersSchema>

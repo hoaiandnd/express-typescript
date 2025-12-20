@@ -1,12 +1,12 @@
 import { DriverBase } from '@/drivers/driver'
 import { loadConfigs } from '@/loaders'
 import { CompanyDetail } from '@/types'
-import { CompanyFilters } from '@/types/request'
+import { CompanyRequestFilters } from '@/types/request'
 import { crawler } from '@/utils/config'
 import pLimit from 'p-limit'
 export type TransformFunc<TResult = any> = (detail: CompanyDetail | null) => TResult
 export type FetchConfig<TTransformResult> = {
-  filters?: CompanyFilters
+  filters?: CompanyRequestFilters
   tranformFn?: TransformFunc<TTransformResult>
   filterFn?: (data: CompanyDetail | null) => boolean
 }
@@ -34,7 +34,7 @@ export class Fetcher extends FetcherBase {
     const companyLinks = await this.driver.getCompanyLinks(responseHtml)
     return companyLinks
   }
-  protected async fetchCompanyDetail(companyLink: string, filters?: CompanyFilters) {
+  protected async fetchCompanyDetail(companyLink: string, filters?: CompanyRequestFilters) {
     const html = await this.fetchHtml(companyLink)
     const result = await this.driver.getCompanyDetail(html)
     if (result && !this.driver.validate(result, filters)) {
@@ -42,7 +42,7 @@ export class Fetcher extends FetcherBase {
     }
     return result
   }
-  async fetchCompanyDetails(filters?: CompanyFilters) {
+  async fetchCompanyDetails(filters?: CompanyRequestFilters) {
     const links = await this.fetchCompanyLinks()
     const limit = pLimit(10)
     const fetchPromises = links.map(link => limit(() => this.fetchCompanyDetail(link)))
