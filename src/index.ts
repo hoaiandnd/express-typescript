@@ -1,9 +1,7 @@
-import { driverLoader, supportedDomainsLoader } from '@/loaders'
-import express from 'express'
 import { Fetcher } from '@/fetcher'
-import { CompanyRequestFilters } from '@/types/request'
-import TraTenCongTyDriver from '@/drivers/www.tratencongty.com'
-import { DriverFactory } from '@/drivers/driver'
+import { driverLoader, supportedDomainsLoader } from '@/loaders'
+import { CompanyRequestFilters } from '@/types'
+import express from 'express'
 
 const app = express()
 const port = 3000
@@ -18,18 +16,16 @@ app.post('/', async (req, res) => {
     if (!driver) {
       res.status(400).json('Ten mien chua co driver nao dang ky. Hay dang ky trong configs.json')
       return
-    } else {
-      const fetcher = new Fetcher(driver)
-      const companyDetails = await fetcher.multiplePageFetch({
-        requestFilters: filters,
-        tranformFn: detail => ({
-          name: detail?.name,
-          phone: detail?.phoneNumber,
-          taxCode: detail?.taxCode
-        })
-      })
-      res.json(companyDetails)
     }
+    const companyDetails = await new Fetcher(driver).multiplePageFetch({
+      requestFilters: filters,
+      tranformFn: detail => ({
+        name: detail?.name,
+        phone: detail?.phoneNumber,
+        taxCode: detail?.taxCode
+      })
+    })
+    res.json(companyDetails)
   } else res.status(400).json('Ten mien chua co driver nao dang ky. Hay dang ky trong configs.json')
 })
 

@@ -1,10 +1,6 @@
 // load supported domains
-import CongTyDoanhNghiepDriver from '@/drivers/congtydoanhnghiep.com'
-import { DriverBase, DriverFactory } from '@/drivers/driver'
-import TraTenCongTyDriver from '@/drivers/www.tratencongty.com'
+import { DriverFactory } from '@/drivers/factory'
 import { AppConfigSchema, CompanyRequestFiltersSchema } from '@/types'
-import { CompanyRequestFilters } from '@/types/request'
-import { readFile } from '@/utils/file'
 import { parseJsonWithSchema, readJsonWithSchema } from '@/utils/parser'
 import { UrlExtractor } from '@/utils/url'
 import { Request } from 'express'

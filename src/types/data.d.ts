@@ -1,8 +1,3 @@
-export type CompanyDetail = {
-  name?: string
-  phoneNumber: string
-  taxCode?: string
-  address?: string
-  startDate?: string
-  founder?: string
-}
+import { DriverConfigCompanyDetail } from '@/types/driver'
+
+export type CompanyDetail = DriverConfigCompanyDetail

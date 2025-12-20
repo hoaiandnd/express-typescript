@@ -1,6 +1,6 @@
 import { DriverBase } from '@/drivers/driver'
 import { CompanyDetail, CompanyRequestFilters } from '@/types'
-import { crawler } from '@/utils/config'
+import { crawler } from '@/utils'
 import pLimit from 'p-limit'
 export type TransformFunc<TResult = any> = (_detail: CompanyDetail | null) => TResult
 export type FetchConfig<TTransformResult> = {
@@ -40,7 +40,7 @@ export class Fetcher extends FetcherBase {
     }
     return result
   }
-  async fetchCompanyDetails(filters?: CompanyRequestFilters) {
+  async fetchCompanyDetails(_filters?: CompanyRequestFilters) {
     const links = await this.fetchCompanyLinks()
     const limit = pLimit(10)
     const fetchPromises = links.map(link => limit(() => this.fetchCompanyDetail(link)))
