@@ -2,7 +2,7 @@ import { supportedDomainsLoader } from '@/loaders'
 import express from 'express'
 import { Fetcher } from '@/fetcher'
 import { CompanyRequestFilters } from '@/types/request'
-import TraTenCongTyDriver from '@/drivers/tratencongty.com'
+import TraTenCongTyDriver from '@/drivers/www.tratencongty.com'
 
 const app = express()
 const port = 3000

@@ -1,4 +1,5 @@
 // load supported domains
+import { DriverBase } from '@/drivers/driver'
 import { AppConfigSchema, CompanyRequestFiltersSchema } from '@/types'
 import { CompanyRequestFilters } from '@/types/request'
 import { readFile } from '@/utils/file'
@@ -32,4 +33,17 @@ export async function loadConfigs(key?: string) {
   const read = await fs.readFile(filePath, 'utf-8')
   const json = JSON.parse(read)
   return key ? json[key] : json
+}
+export async function driverLoader(url: string) {
+  const urlExtractor = new UrlExtractor(url)
+  const parseResult = await readJsonWithSchema(AppConfigSchema, 'configs.json')
+  if (!parseResult.isSuccess) {
+    console.error('driverLoader_function: Cannot read or parse from `configs.json`')
+    return null
+  }
+  const { supportedDomains } = parseResult.data
+  const driverMap: Record<string, DriverBase> = {}
+  supportedDomains.forEach(async domain => {
+    driverMap[domain] = await import(`@/drivers/${domain}.ts`)
+  })
 }

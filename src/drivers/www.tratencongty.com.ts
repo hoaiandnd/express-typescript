@@ -14,7 +14,6 @@ export default class TraTenCongTyDriver extends DriverBase {
   nextPage(): NextPage {
     const pageParam = this._urlExtractor.urlObj.searchParams.get('page') ?? '1'
     const currentPage = Math.max(parseInt(pageParam) || 1, 1)
-
     const nextPage = currentPage + 1
 
     // 👉 thay đổi TRỰC TIẾP trên url hiện tại
