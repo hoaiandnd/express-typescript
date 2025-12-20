@@ -1,4 +1,4 @@
 {
   "supportedDomains": ["congtydoanhnghiep.com", "doanhnghiep.biz", "www.tratencongty.com"],
-  "maxPageCount": 3
+  "concurrencyRequestLimit": 10
 }
