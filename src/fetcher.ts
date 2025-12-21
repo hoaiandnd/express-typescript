@@ -1,6 +1,7 @@
 import { DriverBase } from '@/drivers/driver'
+import { fetchWithProxy } from '@/proxy/proxy.pool'
 import { CompanyDetail, CompanyRequestFilters } from '@/types'
-import { crawler } from '@/utils'
+import { crawler, sleep } from '@/utils'
 import pLimit from 'p-limit'
 export type TransformFunc<TResult = any> = (_detail: CompanyDetail | null) => TResult
 export type FetchConfig<TTransformResult> = {
@@ -28,11 +29,16 @@ export abstract class FetcherBase {
 
 export class Fetcher extends FetcherBase {
   async fetchCompanyLinks() {
+    console.log('this.driver.urlExtractor.url: ' + this.driver.urlExtractor.url)
     const responseHtml = await this.fetchHtml(this.driver.urlExtractor.url)
+    console.log(responseHtml)
     const companyLinks = await this.driver.getCompanyLinks(responseHtml)
     return companyLinks
   }
   protected async fetchCompanyDetail(companyLink: string, filters?: CompanyRequestFilters) {
+    const ms = Math.random() * 2000 + 1000
+    console.log('Waiting for ' + ms + ' ms before fetching ' + companyLink)
+    await sleep(ms)
     const html = await this.fetchHtml(companyLink)
     const result = await this.driver.getCompanyDetail(html)
     if (result && !this.driver.validate(result, filters)) {
@@ -48,7 +54,7 @@ export class Fetcher extends FetcherBase {
     return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult }
   }
   async multiplePageFetch<TTransformResult = any>(config?: FetchConfig<TTransformResult>) {
-    let maxPageCrawl = 10
+    let maxPageCrawl = 5
     const results = [] as (CompanyDetail | TTransformResult | null)[]
     while (maxPageCrawl) {
       console.log('Dang cao du lieu')
