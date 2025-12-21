@@ -53,12 +53,11 @@ export class Fetcher extends FetcherBase {
     return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult }
   }
   async multiplePageFetch<TTransformResult = any>(config?: FetchConfig<TTransformResult>) {
-    let maxPageCrawl = 10
+    let maxPageCrawl = 7
     const results = [] as (CompanyDetail | TTransformResult | null)[]
     while (maxPageCrawl) {
       // results = [] as (CompanyDetail | TTransformResult | null)[]
       await sleep(Math.random() * 2000 + 3000)
-      results.length = 0
       console.log('Dang cao du lieu')
       const pageResult = await this.fetchCompanyDetails(config?.requestFilters)
       const data = pageResult.pageResult.reduce<(CompanyDetail | TTransformResult | null)[]>((acc, item) => {
@@ -76,6 +75,7 @@ export class Fetcher extends FetcherBase {
         results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
       )
       maxPageCrawl--
+      results.length = 0
     }
     return results
   }
