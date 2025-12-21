@@ -1,4 +1,5 @@
 import { DriverBase } from '@/drivers/driver'
+import { appendToCSV } from '@/excel/csv'
 import { fetchWithProxy } from '@/proxy/proxy.pool'
 import { CompanyDetail, CompanyRequestFilters } from '@/types'
 import { crawler, sleep } from '@/utils'
@@ -55,8 +56,9 @@ export class Fetcher extends FetcherBase {
   }
   async multiplePageFetch<TTransformResult = any>(config?: FetchConfig<TTransformResult>) {
     let maxPageCrawl = 5
-    const results = [] as (CompanyDetail | TTransformResult | null)[]
+    let results
     while (maxPageCrawl) {
+      results = [] as (CompanyDetail | TTransformResult | null)[]
       console.log('Dang cao du lieu')
       const pageResult = await this.fetchCompanyDetails(config?.requestFilters)
       const data = pageResult.pageResult.reduce<(CompanyDetail | TTransformResult | null)[]>((acc, item) => {
@@ -69,6 +71,11 @@ export class Fetcher extends FetcherBase {
 
       console.log('Ket thuc cao du lieu')
       console.log('Tiep tuc voi trang ' + pageResult.nextPage.nextPageIndex)
+      appendToCSV(
+        './exports/output.csv',
+        results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
+      )
+      results = [] as (CompanyDetail | TTransformResult | null)[]
       maxPageCrawl--
     }
     return results
