@@ -8,13 +8,12 @@ export function appendToCSV<T extends Record<string, unknown>>(filePath: string,
   fs.mkdirSync(path.dirname(filePath), { recursive: true })
 
   const fileExists = fs.existsSync(filePath)
-
+  if (!fileExists) {
+    fs.writeFileSync(filePath, '\uFEFF')
+  }
   const csv = stringify(records, {
     header: !fileExists,
     quoted: true // an toàn cho dấu phẩy, xuống dòng
   })
-  if (!fileExists) {
-    fs.writeFileSync(filePath, '\uFEFF')
-  }
   fs.appendFileSync(filePath, csv, { encoding: 'utf8' })
 }

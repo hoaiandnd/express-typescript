@@ -21,7 +21,7 @@ export abstract class DriverBase implements IDriver {
     return this._urlExtractor
   }
   protected loadHtml(html: string, defaultValue: string = '', logHtml: boolean = true) {
-    if (logHtml) console.log(typeof html === 'string')
+    if (logHtml) console.info(typeof html === 'string')
     return cheerio.load(typeof html === 'string' ? html : defaultValue)
   }
   protected async loadDriverConfigs(driverConfigFilename?: string) {
@@ -53,12 +53,9 @@ export abstract class DriverBase implements IDriver {
   async getCompanyLinks(html: string): Promise<string[]> {
     const $ = this.loadHtml(html)
     const configs = await this.loadDriverConfigs()
-    console.log('----> Loaded driver configs: ', configs)
     if (!configs.isSuccess) return []
     const anchors = $(configs.data.selectors.companyLinks)
-    console.log(anchors.toArray().length)
     const links = anchors.map((_, a) => this.combineLink($(a).attr('href')))
-    console.log('----> Fetched links count: ' + links.toArray().length)
     return links.toArray()
   }
   abstract getCompanyDetail(_html: string): (CompanyDetail | null) | Promise<CompanyDetail | null>

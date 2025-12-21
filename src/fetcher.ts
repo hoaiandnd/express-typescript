@@ -30,14 +30,12 @@ export abstract class FetcherBase {
 
 export class Fetcher extends FetcherBase {
   async fetchCompanyLinks() {
-    console.log('this.driver.urlExtractor.url: ' + this.driver.urlExtractor.url)
     const responseHtml = await this.fetchHtml(this.driver.urlExtractor.url)
-    console.log(responseHtml)
     const companyLinks = await this.driver.getCompanyLinks(responseHtml)
     return companyLinks
   }
   protected async fetchCompanyDetail(companyLink: string, filters?: CompanyRequestFilters) {
-    const ms = Math.random() * 2000 + 1000
+    const ms = Math.random() * 2000 + 3000
     console.log('Waiting for ' + ms + ' ms before fetching ' + companyLink)
     await sleep(ms)
     const html = await this.fetchHtml(companyLink)
@@ -49,16 +47,18 @@ export class Fetcher extends FetcherBase {
   }
   async fetchCompanyDetails(_filters?: CompanyRequestFilters) {
     const links = await this.fetchCompanyLinks()
-    const limit = pLimit(10)
+    const limit = pLimit(5)
     const fetchPromises = links.map(link => limit(() => this.fetchCompanyDetail(link)))
     const fetchPromisesResult = await Promise.all(fetchPromises)
     return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult }
   }
   async multiplePageFetch<TTransformResult = any>(config?: FetchConfig<TTransformResult>) {
-    let maxPageCrawl = 5
-    let results
+    let maxPageCrawl = 10
+    const results = [] as (CompanyDetail | TTransformResult | null)[]
     while (maxPageCrawl) {
-      results = [] as (CompanyDetail | TTransformResult | null)[]
+      // results = [] as (CompanyDetail | TTransformResult | null)[]
+      await sleep(Math.random() * 2000 + 3000)
+      results.length = 0
       console.log('Dang cao du lieu')
       const pageResult = await this.fetchCompanyDetails(config?.requestFilters)
       const data = pageResult.pageResult.reduce<(CompanyDetail | TTransformResult | null)[]>((acc, item) => {
@@ -75,7 +75,6 @@ export class Fetcher extends FetcherBase {
         './exports/output.csv',
         results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
       )
-      results = [] as (CompanyDetail | TTransformResult | null)[]
       maxPageCrawl--
     }
     return results
