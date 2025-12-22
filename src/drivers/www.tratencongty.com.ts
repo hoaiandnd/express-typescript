@@ -57,7 +57,7 @@ export default class TraTenCongTyDriver extends DriverBase {
     return href ?? ''
   }
   async isBlackListed(detail: CompanyDetail) {
-    const parseResult = await readJsonWithSchema(DriverConfigSchema)
+    const parseResult = await readJsonWithSchema(DriverConfigSchema, 'jsons', `${this._urlExtractor.domain}.json`)
     if (!parseResult.isSuccess) return false
     const { blackList } = parseResult.data
     if (!blackList) return true
@@ -68,9 +68,9 @@ export default class TraTenCongTyDriver extends DriverBase {
           includes: (s: string, v: string) =>
             currentList.ignoreCase ? s.toLowerCase().includes(v.toLowerCase()) : s.includes(v),
           startsWith: (s: string, v: string) =>
-            currentList.ignoreCase ? s.toLowerCase().startsWith(v.toLowerCase()) : s.includes(v),
+            currentList.ignoreCase ? s.toLowerCase().startsWith(v.toLowerCase()) : s.startsWith(v),
           endsWith: (s: string, v: string) =>
-            currentList.ignoreCase ? s.toLowerCase().endsWith(v.toLowerCase()) : s.includes(v)
+            currentList.ignoreCase ? s.toLowerCase().endsWith(v.toLowerCase()) : s.endsWith(v)
         }
         return validateMethod[currentList.validateType as keyof typeof validateMethod](detailValue ?? '', item)
       })

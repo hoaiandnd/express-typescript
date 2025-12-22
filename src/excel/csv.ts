@@ -13,7 +13,7 @@ export function appendToCSV<T extends Record<string, unknown>>(filePath: string,
   }
   const csv = stringify(records, {
     header: !fileExists,
-    quoted: true // an toàn cho dấu phẩy, xuống dòng
+    quoted: false // an toàn cho dấu phẩy, xuống dòng,
   })
   fs.appendFileSync(filePath, csv, { encoding: 'utf8' })
 }

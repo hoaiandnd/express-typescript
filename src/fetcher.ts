@@ -46,7 +46,7 @@ export class Fetcher extends FetcherBase {
     return result
   }
   async fetchCompanyDetails(_filters?: CompanyRequestFilters) {
-    const parseResult = await readJsonWithSchema(AppConfigSchema)
+    const parseResult = await readJsonWithSchema(AppConfigSchema, 'configs.json')
     if (!parseResult.isSuccess) {
       console.error('Failed to load driver config')
       return null
@@ -59,7 +59,7 @@ export class Fetcher extends FetcherBase {
     return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult }
   }
   async multiplePageFetch<TTransformResult = any>(config?: FetchConfig<TTransformResult>) {
-    const parseResult = await readJsonWithSchema(AppConfigSchema)
+    const parseResult = await readJsonWithSchema(AppConfigSchema, 'configs.json')
     if (!parseResult.isSuccess) {
       console.error('Failed to load driver config')
       return []
@@ -82,7 +82,7 @@ export class Fetcher extends FetcherBase {
       console.log('Ket thuc cao du lieu')
       console.log('Tiep tuc voi trang ' + pageResult?.nextPage.nextPageIndex)
       appendToCSV(
-        './exports/nguon_buoi_sang.csv',
+        './exports/dong_nai.csv',
         results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
       )
       maxPagesToCrawl--
