@@ -15,8 +15,13 @@ import { parseNumberFromImage, readJsonWithSchema } from '@/utils/parser'
 
 export default class TraTenCongTyDriver extends DriverBase {
   async validate(detail: CompanyDetail, _filter?: CompanyRequestFilters) {
+    if (!detail.phoneNumber) return false
     const isBlackListed = await this.isBlackListed(detail)
-    if (isBlackListed) return false
+    console.log('Detail name: ', detail.name)
+    if (isBlackListed) {
+      console.error('In black list!!!')
+      return false
+    }
     return true
   }
   nextPage(): NextPage {
@@ -60,9 +65,10 @@ export default class TraTenCongTyDriver extends DriverBase {
     const parseResult = await readJsonWithSchema(DriverConfigSchema, 'jsons', `${this._urlExtractor.domain}.json`)
     if (!parseResult.isSuccess) return false
     const { blackList } = parseResult.data
-    if (!blackList) return true
+    if (!blackList) return false
     for (const [blackListKey, currentList] of Object.entries(blackList)) {
       const detailValue = detail[blackListKey as keyof DriverConfigBlackList]
+      if (!detailValue) continue
       const isBlacklisted = currentList?.rules?.some(item => {
         const validateMethod = {
           includes: (s: string, v: string) =>
@@ -72,11 +78,11 @@ export default class TraTenCongTyDriver extends DriverBase {
           endsWith: (s: string, v: string) =>
             currentList.ignoreCase ? s.toLowerCase().endsWith(v.toLowerCase()) : s.endsWith(v)
         }
-        return validateMethod[currentList.validateType as keyof typeof validateMethod](detailValue ?? '', item)
+        return validateMethod[currentList.validateType as keyof typeof validateMethod](detailValue, item)
       })
-      if (isBlacklisted) return false
+      if (isBlacklisted) return true
     }
-    return true
+    return false
   }
   // override base method
   protected async crawl($: cheerio.CheerioAPI) {
@@ -95,9 +101,9 @@ export default class TraTenCongTyDriver extends DriverBase {
     return {
       name: $name?.first().text(),
       founder: '',
-      phoneNumber,
+      phoneNumber: phoneNumber.replace(/\r?\n|\r/g, ''),
       address: '',
-      taxCode,
+      taxCode: taxCode.replace(/\r?\n|\r/g, ''),
       startDate: ''
     } as CompanyDetail
   }

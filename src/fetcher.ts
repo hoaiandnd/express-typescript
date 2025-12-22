@@ -40,8 +40,10 @@ export class Fetcher extends FetcherBase {
     await sleep(ms)
     const html = await this.fetchHtml(companyLink)
     const result = await this.driver.getCompanyDetail(html)
-    if (result && !this.driver.validate(result, filters)) {
-      return null
+
+    if (result) {
+      const validatedResult = await this.driver.validate(result, filters)
+      return validatedResult ? result : null
     }
     return result
   }
@@ -68,7 +70,7 @@ export class Fetcher extends FetcherBase {
     const results = [] as (CompanyDetail | TTransformResult | null)[]
     while (maxPagesToCrawl) {
       // results = [] as (CompanyDetail | TTransformResult | null)[]
-      await sleep(Math.random() * 2000 + 3000)
+      // await sleep(Math.random() * 2000 + 3000)
       console.log('Dang cao du lieu')
       const pageResult = await this.fetchCompanyDetails(config?.requestFilters)
       const data = pageResult?.pageResult.reduce<(CompanyDetail | TTransformResult | null)[]>((acc, item) => {
@@ -82,7 +84,7 @@ export class Fetcher extends FetcherBase {
       console.log('Ket thuc cao du lieu')
       console.log('Tiep tuc voi trang ' + pageResult?.nextPage.nextPageIndex)
       appendToCSV(
-        './exports/dong_nai.csv',
+        './exports/dong_nai_2.csv',
         results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
       )
       maxPagesToCrawl--

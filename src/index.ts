@@ -28,7 +28,8 @@ app.post('/', async (req, res) => {
       tranformFn: detail => ({
         name: detail?.name,
         phone: detail?.phoneNumber
-      })
+      }),
+      filterFn: detail => detail !== null && !!detail.phoneNumber
     })
     res.json(companyDetails)
   } else res.status(400).json('Ten mien chua co driver nao dang ky. Hay dang ky trong configs.json')

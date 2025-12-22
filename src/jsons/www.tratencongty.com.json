@@ -16,7 +16,7 @@
   },
   "blackList": {
     "name": {
-      "rules": ["văn phòng đại diện", "Ủy ban", "ubnd"],
+      "rules": ["văn phòng đại diện", "Ủy ban", "ubnd", "công an"],
       "validateType": "includes",
       "ignoreCase": true
     },
