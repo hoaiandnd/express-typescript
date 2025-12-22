@@ -2,7 +2,6 @@ import * as cheerio from 'cheerio'
 
 import { DriverBase } from '@/drivers/driver'
 import {
-  BlackListObject,
   ClientDateTimeString,
   CompanyDetail,
   CompanyRequestFilters,
