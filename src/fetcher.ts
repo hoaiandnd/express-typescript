@@ -1,8 +1,8 @@
 import { DriverBase } from '@/drivers/driver'
 import { appendToCSV } from '@/excel/csv'
 import { fetchWithProxy } from '@/proxy/proxy.pool'
-import { CompanyDetail, CompanyRequestFilters } from '@/types'
-import { crawler, sleep } from '@/utils'
+import { AppConfigSchema, CompanyDetail, CompanyRequestFilters, DriverConfigSchema } from '@/types'
+import { crawler, readJsonWithSchema, sleep } from '@/utils'
 import pLimit from 'p-limit'
 export type TransformFunc<TResult = any> = (_detail: CompanyDetail | null) => TResult
 export type FetchConfig<TTransformResult> = {
@@ -46,35 +46,46 @@ export class Fetcher extends FetcherBase {
     return result
   }
   async fetchCompanyDetails(_filters?: CompanyRequestFilters) {
+    const parseResult = await readJsonWithSchema(AppConfigSchema)
+    if (!parseResult.isSuccess) {
+      console.error('Failed to load driver config')
+      return null
+    }
+    let { concurrencyRequestLimit } = parseResult.data
     const links = await this.fetchCompanyLinks()
-    const limit = pLimit(5)
+    const limit = pLimit(concurrencyRequestLimit ?? 5)
     const fetchPromises = links.map(link => limit(() => this.fetchCompanyDetail(link)))
     const fetchPromisesResult = await Promise.all(fetchPromises)
     return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult }
   }
   async multiplePageFetch<TTransformResult = any>(config?: FetchConfig<TTransformResult>) {
-    let maxPageCrawl = 7
+    const parseResult = await readJsonWithSchema(AppConfigSchema)
+    if (!parseResult.isSuccess) {
+      console.error('Failed to load driver config')
+      return []
+    }
+    let { maxPagesToCrawl } = parseResult.data
     const results = [] as (CompanyDetail | TTransformResult | null)[]
-    while (maxPageCrawl) {
+    while (maxPagesToCrawl) {
       // results = [] as (CompanyDetail | TTransformResult | null)[]
       await sleep(Math.random() * 2000 + 3000)
       console.log('Dang cao du lieu')
       const pageResult = await this.fetchCompanyDetails(config?.requestFilters)
-      const data = pageResult.pageResult.reduce<(CompanyDetail | TTransformResult | null)[]>((acc, item) => {
+      const data = pageResult?.pageResult.reduce<(CompanyDetail | TTransformResult | null)[]>((acc, item) => {
         if (!config?.filterFn || config?.filterFn?.(item)) {
           acc.push(config?.tranformFn ? config.tranformFn(item) : item)
         }
         return acc
       }, [])
-      results.push(...data)
+      results.push(...(data ?? []))
 
       console.log('Ket thuc cao du lieu')
-      console.log('Tiep tuc voi trang ' + pageResult.nextPage.nextPageIndex)
+      console.log('Tiep tuc voi trang ' + pageResult?.nextPage.nextPageIndex)
       appendToCSV(
         './exports/nguon_buoi_sang.csv',
         results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
       )
-      maxPageCrawl--
+      maxPagesToCrawl--
       results.length = 0
     }
     return results

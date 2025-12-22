@@ -1,9 +1,17 @@
 import * as cheerio from 'cheerio'
 
 import { DriverBase } from '@/drivers/driver'
-import { ClientDateTimeString, CompanyDetail, CompanyRequestFilters, NextPage } from '@/types'
+import {
+  BlackListObject,
+  ClientDateTimeString,
+  CompanyDetail,
+  CompanyRequestFilters,
+  DriverConfigBlackList,
+  DriverConfigSchema,
+  NextPage
+} from '@/types'
 import { UrlExtractor } from '@/utils/url'
-import { parseNumberFromImage } from '@/utils/parser'
+import { parseNumberFromImage, readJsonWithSchema } from '@/utils/parser'
 
 export default class TraTenCongTyDriver extends DriverBase {
   async validate(detail: CompanyDetail, _filter?: CompanyRequestFilters) {
@@ -49,24 +57,25 @@ export default class TraTenCongTyDriver extends DriverBase {
     return href ?? ''
   }
   async isBlackListed(detail: CompanyDetail) {
-    // const json = await this.getProperty('blackList')
-    // const blackList = JSON.parse(json) as BlackListObject
-
-    // for (const [blackListKey, currentList] of Object.entries(blackList)) {
-    //   const detailValue = detail[blackListKey as keyof BlackListObject]
-    //   const isBlacklisted = currentList.list.some(item => {
-    //     const validateMethod = {
-    //       includes: (s: string, v: string) =>
-    //         currentList.ignoreCase ? s.toLowerCase().includes(v.toLowerCase()) : s.includes(v),
-    //       startsWith: (s: string, v: string) =>
-    //         currentList.ignoreCase ? s.toLowerCase().startsWith(v.toLowerCase()) : s.includes(v),
-    //       endsWith: (s: string, v: string) =>
-    //         currentList.ignoreCase ? s.toLowerCase().endsWith(v.toLowerCase()) : s.includes(v)
-    //     }
-    //     return validateMethod[currentList.validateType as keyof typeof validateMethod](detailValue ?? '', item)
-    //   })
-    //   if (isBlacklisted) return false
-    // }
+    const parseResult = await readJsonWithSchema(DriverConfigSchema)
+    if (!parseResult.isSuccess) return false
+    const { blackList } = parseResult.data
+    if (!blackList) return true
+    for (const [blackListKey, currentList] of Object.entries(blackList)) {
+      const detailValue = detail[blackListKey as keyof DriverConfigBlackList]
+      const isBlacklisted = currentList?.rules?.some(item => {
+        const validateMethod = {
+          includes: (s: string, v: string) =>
+            currentList.ignoreCase ? s.toLowerCase().includes(v.toLowerCase()) : s.includes(v),
+          startsWith: (s: string, v: string) =>
+            currentList.ignoreCase ? s.toLowerCase().startsWith(v.toLowerCase()) : s.includes(v),
+          endsWith: (s: string, v: string) =>
+            currentList.ignoreCase ? s.toLowerCase().endsWith(v.toLowerCase()) : s.includes(v)
+        }
+        return validateMethod[currentList.validateType as keyof typeof validateMethod](detailValue ?? '', item)
+      })
+      if (isBlacklisted) return false
+    }
     return true
   }
   // override base method
