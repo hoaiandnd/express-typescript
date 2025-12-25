@@ -53,7 +53,7 @@ export class Fetcher extends FetcherBase {
       console.error('Failed to load driver config')
       return null
     }
-    let { concurrencyRequestLimit } = parseResult.data
+    const { concurrencyRequestLimit } = parseResult.data
     const links = await this.fetchCompanyLinks()
     const limit = pLimit(concurrencyRequestLimit ?? 5)
     const fetchPromises = links.map(link => limit(() => this.fetchCompanyDetail(link)))
@@ -84,7 +84,7 @@ export class Fetcher extends FetcherBase {
       console.log('Ket thuc cao du lieu')
       console.log('Tiep tuc voi trang ' + pageResult?.nextPage.nextPageIndex)
       appendToCSV(
-        './exports/dong_nai_2.csv',
+        './exports/ba_ria_vung_tau.csv',
         results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
       )
       maxPagesToCrawl--

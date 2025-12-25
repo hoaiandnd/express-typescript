@@ -20,14 +20,19 @@ export const parseJsonWithSchema = <T>(schema: ZodType<T>, json?: string) => {
 }
 
 export const parseNumberFromImage = async (imageUrl?: string, defaultValue: string = '') => {
-  const worker = await createWorker('eng')
-  await worker.setParameters({
-    tessedit_char_whitelist: '0123456789'
-  })
-  if (!imageUrl) {
+  try {
+    const worker = await createWorker('eng')
+    await worker.setParameters({
+      tessedit_char_whitelist: '0123456789'
+    })
+    if (!imageUrl) {
+      return defaultValue
+    } else {
+      const numberConverted = await worker.recognize(imageUrl)
+      return numberConverted.data.text
+    }
+  } catch (err) {
+    console.log((err as Error).message)
     return defaultValue
-  } else {
-    const numberConverted = await worker.recognize(imageUrl)
-    return numberConverted.data.text
   }
 }
