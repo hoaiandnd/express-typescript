@@ -35,7 +35,7 @@ export class Fetcher extends FetcherBase {
     return companyLinks
   }
   protected async fetchCompanyDetail(companyLink: string, filters?: CompanyRequestFilters) {
-    const ms = Math.random() * 2000 + 3000
+    const ms = Math.random() * 2000 + 1000
     console.log('Waiting for ' + ms + ' ms before fetching ' + companyLink)
     await sleep(ms)
     const html = await this.fetchHtml(companyLink)
@@ -84,7 +84,7 @@ export class Fetcher extends FetcherBase {
       console.log('Ket thuc cao du lieu')
       console.log('Tiep tuc voi trang ' + pageResult?.nextPage.nextPageIndex)
       appendToCSV(
-        './exports/ba_ria_vung_tau.csv',
+        './exports/dong_thap.csv',
         results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
       )
       maxPagesToCrawl--
