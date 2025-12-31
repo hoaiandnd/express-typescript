@@ -2,7 +2,7 @@ import { DriverBase } from '@/drivers/driver'
 import { appendToCSV } from '@/excel/csv'
 import { fetchWithProxy } from '@/proxy/proxy.pool'
 import { AppConfigSchema, CompanyDetail, CompanyRequestFilters, DriverConfigSchema } from '@/types'
-import { crawler, readJsonWithSchema, sleep } from '@/utils'
+import { crawler, log, readJsonWithSchema, sleep } from '@/utils'
 import pLimit from 'p-limit'
 export type TransformFunc<TResult = any> = (_detail: CompanyDetail | null) => TResult
 export type FetchConfig<TTransformResult> = {
@@ -69,8 +69,6 @@ export class Fetcher extends FetcherBase {
     let { maxPagesToCrawl } = parseResult.data
     const results = [] as (CompanyDetail | TTransformResult | null)[]
     while (maxPagesToCrawl) {
-      // results = [] as (CompanyDetail | TTransformResult | null)[]
-      // await sleep(Math.random() * 2000 + 3000)
       console.log('Dang cao du lieu')
       const pageResult = await this.fetchCompanyDetails(config?.requestFilters)
       const data = pageResult?.pageResult.reduce<(CompanyDetail | TTransformResult | null)[]>((acc, item) => {
@@ -79,12 +77,16 @@ export class Fetcher extends FetcherBase {
         }
         return acc
       }, [])
+      if (!data || data.length === 0) {
+        await log(`Khong co du lieu de tiep tuc - current page is ${pageResult?.nextPage ?? 1 - 1 + ''}`)
+        return []
+      }
       results.push(...(data ?? []))
 
       console.log('Ket thuc cao du lieu')
       console.log('Tiep tuc voi trang ' + pageResult?.nextPage.nextPageIndex)
       appendToCSV(
-        './exports/dong_thap.csv',
+        './exports/ben_tre_45.csv',
         results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
       )
       maxPagesToCrawl--
