@@ -86,7 +86,7 @@ export class Fetcher extends FetcherBase {
       console.log('Ket thuc cao du lieu')
       console.log('Tiep tuc voi trang ' + pageResult?.nextPage.nextPageIndex)
       appendToCSV(
-        './exports/tphcm_751.csv',
+        './exports/di_an_37.csv',
         results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
       )
       maxPagesToCrawl--
