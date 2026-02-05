@@ -1,7 +1,6 @@
 import { DriverBase } from '@/drivers/driver'
 import { appendToCSV } from '@/excel/csv'
-import { fetchWithProxy } from '@/proxy/proxy.pool'
-import { AppConfigSchema, CompanyDetail, CompanyRequestFilters, DriverConfigSchema } from '@/types'
+import { AppConfigSchema, CompanyDetail, CompanyRequestFilters } from '@/types'
 import { crawler, log, readJsonWithSchema, sleep } from '@/utils'
 import pLimit from 'p-limit'
 export type TransformFunc<TResult = any> = (_detail: CompanyDetail | null) => TResult
@@ -78,7 +77,7 @@ export class Fetcher extends FetcherBase {
         return acc
       }, [])
       if (!data || data.length === 0) {
-        await log(`Khong co du lieu de tiep tuc - current page is ${pageResult?.nextPage ?? 1 - 1 + ''}`)
+        await log(`Khong co du lieu de tiep tuc - current page is ${pageResult?.nextPage?.nextPageIndex ?? 1 - 1 + ''}`)
         return []
       }
       results.push(...(data ?? []))
@@ -86,7 +85,7 @@ export class Fetcher extends FetcherBase {
       console.log('Ket thuc cao du lieu')
       console.log('Tiep tuc voi trang ' + pageResult?.nextPage.nextPageIndex)
       appendToCSV(
-        './exports/di_an_37.csv',
+        './exports/dong_nai_200.csv',
         results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
       )
       maxPagesToCrawl--
