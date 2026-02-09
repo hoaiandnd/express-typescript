@@ -9,12 +9,6 @@ const port = 3000
 app.use(express.json())
 
 app.post('/', async (req, res) => {
-  // xac dinh bo nho
-  // setInterval(() => {
-  //   const used = process.memoryUsage()
-  //   console.log(`RSS ${(used.rss / 1024 / 1024).toFixed(2)} MB`, `Heap ${(used.heapUsed / 1024 / 1024).toFixed(2)} MB`)
-  // }, 5000)
-
   const urlExtractor = await supportedDomainsLoader(req)
   if (urlExtractor) {
     const filters = req.body as CompanyRequestFilters
