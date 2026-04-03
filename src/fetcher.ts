@@ -92,8 +92,7 @@ export class Fetcher extends FetcherBase {
       if (!parseResult.isSuccess) {
         throw new Error('FAILED_TO_LOAD_CONFIG')
       }
-      const fetchQueue = new FetchQueue()
-      const limiter = await fetchQueue.getLimiter()
+      const limiter = await new FetchQueue().getLimiter()
       const fetchPromises = links.map(link => limiter(() => this.fetchCompanyDetail(link)))
       const fetchPromisesResult = await Promise.all(fetchPromises)
       return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult }
