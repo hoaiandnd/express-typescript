@@ -3,11 +3,11 @@ import { appendToCSV } from '@/excel/csv'
 import { AppConfigSchema, CompanyDetail, CompanyRequestFilters } from '@/types'
 import { crawler, log, readJsonWithSchema, sleep } from '@/utils'
 import pLimit from 'p-limit'
-export type TransformFunc<TResult = any> = (_detail: CompanyDetail | null) => TResult
+export type TransformFunc<TResult = any> = (_detail: CompanyDetail | null | undefined) => TResult
 export type FetchConfig<TTransformResult> = {
   requestFilters?: CompanyRequestFilters
   tranformFn?: TransformFunc<TTransformResult>
-  filterFn?: (_data: CompanyDetail | null) => boolean
+  filterFn?: (_data: CompanyDetail | null | undefined) => boolean
 }
 
 export abstract class FetcherBase {
@@ -27,6 +27,36 @@ export abstract class FetcherBase {
   }
 }
 
+const waitRandomTime = async () => {
+  const ms = Math.random() * 1000 + 4000
+  console.log('Waiting for ' + ms + ' ms before fetching')
+  await sleep(ms)
+}
+
+export class FetchQueue {
+  public static DEFAULT_CONCURRENCY_REQUEST_LIMIT = 5
+  private concurrencyLimit: number
+  private queue: (() => Promise<void>)[]
+  private activeCount: number
+  constructor() {
+    this.concurrencyLimit = FetchQueue.DEFAULT_CONCURRENCY_REQUEST_LIMIT
+    this.queue = []
+    this.activeCount = 0
+  }
+  protected async readConfigs() {
+    const parseResult = await readJsonWithSchema(AppConfigSchema, 'configs.json')
+    if (!parseResult.isSuccess) {
+      throw new Error('APP_ERROR_FAILED_TO_LOAD_CONFIG')
+    }
+    this.concurrencyLimit = parseResult.data.concurrencyRequestLimit ?? FetchQueue.DEFAULT_CONCURRENCY_REQUEST_LIMIT
+  }
+  public async getLimiter() {
+    await this.readConfigs()
+
+    return pLimit(this.concurrencyLimit)
+  }
+}
+
 export class Fetcher extends FetcherBase {
   async fetchCompanyLinks() {
     const responseHtml = await this.fetchHtml(this.driver.urlExtractor.url)
@@ -34,30 +64,43 @@ export class Fetcher extends FetcherBase {
     return companyLinks
   }
   protected async fetchCompanyDetail(companyLink: string, filters?: CompanyRequestFilters) {
-    const ms = Math.random() * 2000 + 1000
-    console.log('Waiting for ' + ms + ' ms before fetching ' + companyLink)
-    await sleep(ms)
-    const html = await this.fetchHtml(companyLink)
-    const result = await this.driver.getCompanyDetail(html)
-
-    if (result) {
-      const validatedResult = await this.driver.validate(result, filters)
-      return validatedResult ? result : null
+    try {
+      // chờ random trước khi gửi request
+      await waitRandomTime()
+      const html = await this.fetchHtml(companyLink)
+      // từ html, lấy ra dữ liệu thông tin công ty
+      const result = await this.driver.getCompanyDetail(html)
+      // nếu lấy được thông tin, kiểm  tra xem có hợp lệ không (dựa vào phương thức `validate` được định nghĩa ở từng driver) và hàm `filters` được truyền vào (nếu có)
+      if (result) {
+        const validatedResult = await this.driver.validate(result, filters)
+        // trả về kết quả theo điều kiện
+        return validatedResult ? result : null
+      }
+      // trả về `null` nếu không lấy được thông tin công ty
+      return result
+    } catch (err) {
+      console.log('Error occured at `fetchCompanyDetail` method. Link: ' + companyLink)
+      console.log((err as Error).message)
     }
-    return result
   }
   async fetchCompanyDetails(_filters?: CompanyRequestFilters) {
-    const parseResult = await readJsonWithSchema(AppConfigSchema, 'configs.json')
-    if (!parseResult.isSuccess) {
-      console.error('Failed to load driver config')
-      return null
+    try {
+      // lấy danh sách các link trang chi tiết của các công ty
+      const links = await this.fetchCompanyLinks()
+      // đọc file cấu hình
+      const parseResult = await readJsonWithSchema(AppConfigSchema, 'configs.json')
+      if (!parseResult.isSuccess) {
+        throw new Error('FAILED_TO_LOAD_CONFIG')
+      }
+      const fetchQueue = new FetchQueue()
+      const limiter = await fetchQueue.getLimiter()
+      const fetchPromises = links.map(link => limiter(() => this.fetchCompanyDetail(link)))
+      const fetchPromisesResult = await Promise.all(fetchPromises)
+      return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult }
+    } catch (err) {
+      console.log('Error occured at `fetchCompanyDetails` method.')
+      console.error((err as Error).message)
     }
-    const { concurrencyRequestLimit } = parseResult.data
-    const links = await this.fetchCompanyLinks()
-    const limit = pLimit(concurrencyRequestLimit ?? 5)
-    const fetchPromises = links.map(link => limit(() => this.fetchCompanyDetail(link)))
-    const fetchPromisesResult = await Promise.all(fetchPromises)
-    return { nextPage: this.driver.nextPage(), pageResult: fetchPromisesResult }
   }
   async multiplePageFetch<TTransformResult = any>(config?: FetchConfig<TTransformResult>) {
     const parseResult = await readJsonWithSchema(AppConfigSchema, 'configs.json')
@@ -71,8 +114,9 @@ export class Fetcher extends FetcherBase {
       console.log('Dang cao du lieu')
       const pageResult = await this.fetchCompanyDetails(config?.requestFilters)
       const data = pageResult?.pageResult.reduce<(CompanyDetail | TTransformResult | null)[]>((acc, item) => {
-        if (!config?.filterFn || config?.filterFn?.(item)) {
-          acc.push(config?.tranformFn ? config.tranformFn(item) : item)
+        if ((item && !config?.filterFn) || config?.filterFn?.(item)) {
+          const transformedItem = config?.tranformFn ? config.tranformFn(item) : item
+          if (transformedItem) acc.push(transformedItem)
         }
         return acc
       }, [])
@@ -85,7 +129,7 @@ export class Fetcher extends FetcherBase {
       console.log('Ket thuc cao du lieu')
       console.log('Tiep tuc voi trang ' + pageResult?.nextPage.nextPageIndex)
       appendToCSV(
-        './exports/long_an_162.csv',
+        './exports/binh_duong_384.csv',
         results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
       )
       maxPagesToCrawl--
