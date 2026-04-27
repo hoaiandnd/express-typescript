@@ -11,6 +11,8 @@ import {
 } from '@/types'
 import { UrlExtractor } from '@/utils/url'
 import { parseNumberFromImage, readJsonWithSchema } from '@/utils/parser'
+import { IDriverPaginater, IDriverValidator } from '@/drivers/providers'
+import { MayBeAsync } from '@/types/redefined-types'
 
 export default class TraTenCongTyDriver extends DriverBase {
   async validate(detail: CompanyDetail, _filter?: CompanyRequestFilters) {
@@ -98,5 +100,23 @@ export default class TraTenCongTyDriver extends DriverBase {
       taxCode: taxCode.replace(/\r?\n|\r/g, ''),
       startDate: ''
     } as CompanyDetail
+  }
+}
+
+export interface ITraTenCongTyDriver
+  extends IDriverValidator<'www.tratencongty.com'>,
+    IDriverPaginater,
+    IDriverPaginater {}
+export class TraTenCongTyDriver_v2 implements ITraTenCongTyDriver {
+  validate(
+    _detail: CompanyDetail,
+    _filters?:
+      | { url: string; from?: string | undefined; to?: string | undefined; limit?: number | undefined }
+      | undefined
+  ): MayBeAsync<boolean> {
+    throw new Error('Method not implemented.')
+  }
+  nextPage(): MayBeAsync<NextPage> {
+    throw new Error('Method not implemented.')
   }
 }

@@ -23,7 +23,7 @@ app.post('/', async (req, res) => {
         name: detail?.name,
         phone: detail?.phoneNumber
       }),
-      filterFn: detail => detail !== null && !!detail.phoneNumber
+      filterFn: detail => detail !== null && !!detail?.phoneNumber && detail?.phoneNumber.length === 10
     })
     res.json(companyDetails)
   } else res.status(400).json('Ten mien chua co driver nao dang ky. Hay dang ky trong configs.json')
