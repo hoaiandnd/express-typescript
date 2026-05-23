@@ -1,5 +1,5 @@
 {
   "supportedDomains": ["congtydoanhnghiep.com", "doanhnghiep.biz", "www.tratencongty.com"],
-  "concurrencyRequestLimit": 5,
+  "concurrencyRequestLimit": 7,
   "maxPagesToCrawl": 5
 }
