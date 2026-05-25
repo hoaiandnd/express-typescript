@@ -2,7 +2,6 @@ import { CompanyDetail, DriverBase, NextPage } from '@/drivers/driver'
 import { ClientDateTimeString } from '@/types/datetime'
 import { CompanyRequestFilters } from '@/types/request'
 import { UrlExtractor } from '@/utils/url'
-import * as cheerio from 'cheerio'
 
 export class CongTyDoanhNghiepSelector {
   static Anchors: string = 'div.table-striped article h2 a'
@@ -43,8 +42,9 @@ export default class CongTyDoanhNghiepDriver extends DriverBase {
   //   return links.toArray()
   // }
   async datetimeValidate(companyDetail: CompanyDetail, fromDate?: ClientDateTimeString) {
-    if (!fromDate) return true
-    const { startDate } = companyDetail
+    // if (!fromDate) return true
+    // const { startDate } = companyDetail
+    // return true
     return true
   }
   async getCompanyDetail(html: string) {
@@ -61,6 +61,6 @@ export default class CongTyDoanhNghiepDriver extends DriverBase {
     // for (const blackListKey in blackList) {
     //   // const currentList = blackList[blackListKey]
     // }
-    return true
+    return false
   }
 }

@@ -60,6 +60,7 @@ export class FetchQueue {
 export class Fetcher extends FetcherBase {
   async fetchCompanyLinks() {
     const responseHtml = await this.fetchHtml(this.driver.urlExtractor.url)
+    console.log(responseHtml)
     const companyLinks = await this.driver.getCompanyLinks(responseHtml)
     return companyLinks
   }
@@ -68,6 +69,7 @@ export class Fetcher extends FetcherBase {
       // chờ random trước khi gửi request
       await waitRandomTime()
       const html = await this.fetchHtml(companyLink)
+      console.log(html)
       // từ html, lấy ra dữ liệu thông tin công ty
       const result = await this.driver.getCompanyDetail(html)
       // nếu lấy được thông tin, kiểm  tra xem có hợp lệ không (dựa vào phương thức `validate` được định nghĩa ở từng driver) và hàm `filters` được truyền vào (nếu có)
@@ -129,7 +131,7 @@ export class Fetcher extends FetcherBase {
       console.log('Ket thuc cao du lieu')
       console.log('Tiep tuc voi trang ' + pageResult?.nextPage.nextPageIndex)
       appendToCSV(
-        './exports/dong_nai_106.csv',
+        './exports/congtydoanhnghie_dong_nai_106.csv',
         results.filter(r => r !== null && r !== undefined) as Record<string, unknown>[]
       )
       maxPagesToCrawl--
